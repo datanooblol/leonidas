@@ -1,6 +1,7 @@
 # Backend API Documentation
 
 ## Tech Stack
+
 - **Framework**: FastAPI
 - **Database**: DynamoDB
 - **File Storage**: S3
@@ -10,6 +11,7 @@
 ## API Endpoints
 
 ### Authentication
+
 ```
 POST /auth/register
 POST /auth/login
@@ -17,6 +19,7 @@ POST /auth/logout
 ```
 
 ### Projects
+
 ```
 GET /projects                    # List user's projects
 POST /projects                   # Create new project
@@ -26,6 +29,7 @@ DELETE /projects/{id}            # Delete project
 ```
 
 ### Sessions
+
 ```
 GET /projects/{project_id}/sessions    # List sessions in project
 POST /projects/{project_id}/sessions   # Create new session
@@ -35,6 +39,7 @@ DELETE /sessions/{id}                  # Delete session
 ```
 
 ### Files
+
 ```
 POST /projects/{project_id}/files      # Upload CSV
 GET /projects/{project_id}/files       # List project files
@@ -42,6 +47,7 @@ DELETE /files/{id}                     # Delete file
 ```
 
 ### Chat
+
 ```
 POST /sessions/{id}/messages           # Send message & get AI response
 GET /sessions/{id}/messages            # Get message history
@@ -50,6 +56,7 @@ GET /sessions/{id}/messages            # Get message history
 ## Request/Response Examples
 
 ### Authentication
+
 ```json
 POST /auth/register
 {
@@ -66,6 +73,7 @@ Response: 201
 ```
 
 ### Create Project
+
 ```json
 POST /projects
 Authorization: Bearer {jwt_token}
@@ -84,6 +92,7 @@ Response: 201
 ```
 
 ### Send Chat Message
+
 ```json
 POST /sessions/{session_id}/messages
 Authorization: Bearer {jwt_token}
@@ -111,6 +120,7 @@ Response: 200
 ## Database Schema
 
 ### Users Table
+
 ```
 PK: user_id (string)
 email (string)
@@ -119,6 +129,7 @@ created_at (string)
 ```
 
 ### Projects Table
+
 ```
 PK: project_id (string)
 user_id (string)
@@ -128,6 +139,7 @@ created_at (string)
 ```
 
 ### Sessions Table
+
 ```
 PK: session_id (string)
 project_id (string)
@@ -137,6 +149,7 @@ updated_at (string)
 ```
 
 ### Files Table
+
 ```
 PK: file_id (string)
 project_id (string)
@@ -147,6 +160,7 @@ created_at (string)
 ```
 
 ### Messages Table
+
 ```
 PK: message_id (string)
 session_id (string)
@@ -161,6 +175,35 @@ created_at (string)
 2. All API requests include `Authorization: Bearer {token}` header
 3. Lambda validates JWT and extracts user_id
 4. API operations filtered by user_id for data isolation
+
+## Deployment Steps
+
+### Step 1: Deploy Infrastructure Foundation
+```bash
+cd infrastructure
+terraform init
+terraform apply
+```
+**Creates:** ECR, DynamoDB, S3, Amplify, API Gateway (without Lambda)
+
+### Step 2: Deploy Backend Container Image
+```bash
+# Trigger backend CI/CD by pushing changes
+echo "# deploy backend" >> backend/README.md
+git add backend/README.md
+git commit -m "deploy: backend container image"
+git push origin main
+```
+**Creates:** Container image in ECR repository
+
+### Step 3: Deploy Infrastructure with Backend Integration
+```bash
+# Uncomment Lambda function in infrastructure/container.tf
+# Uncomment API Gateway integration in infrastructure/api.tf
+cd infrastructure
+terraform apply
+```
+**Creates:** Lambda function using ECR image + API Gateway integration
 
 ## Development Setup
 
