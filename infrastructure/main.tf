@@ -1,4 +1,4 @@
-# Test5
+# Test6
 terraform {
   required_providers {
     aws = {
@@ -10,7 +10,7 @@ terraform {
       version = "~> 3.1"
     }
   }
-  
+
   backend "s3" {
     bucket = "leonidas-terraform-state-datanooblol"
     key    = "dev/terraform.tfstate"
