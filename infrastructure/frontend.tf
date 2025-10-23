@@ -9,7 +9,7 @@ resource "aws_amplify_app" "frontend" {
 
   environment_variables = {
     AMPLIFY_MONOREPO_APP_ROOT = "frontend"
-    VITE_API_URL             = "https://leonidas-api.${var.domain_name}"
+    NEXT_PUBLIC_API_URL      = "https://leonidas-api.${var.domain_name}"
   }
 
   custom_rule {

@@ -32,17 +32,8 @@ jobs:
     - name: Test
       run: npm test
       
-  wait-for-infrastructure:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for infrastructure
-        run: |
-          echo "Waiting for infrastructure deployment to complete..."
-          sleep 300  # 5 minutes - adjust as needed
-          
   deploy:
-    needs: [build, wait-for-infrastructure]
+    needs: build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
@@ -56,11 +47,16 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
         
-    - name: Build frontend
-      run: |
-        npm ci
-        npm run build
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build for production
+      run: npm run build
+      env:
+        NEXT_PUBLIC_API_URL: https://leonidas-api.datanooblol.com
         
     - name: Configure AWS
       uses: aws-actions/configure-aws-credentials@v4
@@ -69,12 +65,21 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
         
-    - name: Deploy to S3 (Amplify hosting)
+    - name: Deploy to Amplify
       run: |
-        cd ../infrastructure
-        APP_ID=$(terraform output -raw amplify_app_id)
-        cd ../frontend
+        # Get Amplify App ID
+        APP_ID=$(aws amplify list-apps --query "apps[?name=='leonidas-frontend'].appId" --output text)
         
-        # Deploy built files directly to Amplify
-        aws amplify start-job --app-id $APP_ID --branch-name main --job-type RELEASE
-        echo "Deployed to Amplify successfully"
+        # Create deployment package
+        cd out
+        zip -r ../deployment.zip .
+        cd ..
+        
+        # Upload to S3 (Amplify uses S3 for deployments)
+        aws s3 cp deployment.zip s3://amplify-deployments-$APP_ID/deployment-$(date +%s).zip
+        
+        # Trigger manual deployment
+        aws amplify start-deployment --app-id $APP_ID --branch-name main
+        
+        echo "✅ Frontend deployed successfully!"
+        echo "🌐 URL: https://leonidas.datanooblol.com"

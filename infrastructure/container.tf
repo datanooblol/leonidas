@@ -91,35 +91,35 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
-# Lambda function (container-based) - Commented out until ECR has image
-# resource "aws_lambda_function" "api" {
-#   function_name = "${var.project_name}-api"
-#   role         = aws_iam_role.lambda_role.arn
-#   
-#   package_type = "Image"
-#   image_uri    = "${aws_ecr_repository.backend.repository_url}:latest"
-#   
-#   timeout     = 300  # 5 minutes
-#   memory_size = 512
-#
-#   environment {
-#     variables = {
-#       JWT_SECRET_KEY        = "this-is-spar-tan"
-#       APP_AWS_REGION        = var.aws_region
-#       DYNAMODB_TABLE_PREFIX = var.table_prefix
-#       S3_BUCKET            = aws_s3_bucket.uploads.bucket
-#       FILE_BUCKET          = aws_s3_bucket.uploads.bucket
-#       BEDROCK_REGION       = "us-west-2"
-#     }
-#   }
-#
-#   tags = {
-#     Name        = "Backend API Function"
-#     Environment = var.environment
-#     Project     = var.project_name
-#   }
-#
-#   lifecycle {
-#     ignore_changes = [image_uri]
-#   }
-# }
+# Lambda function (container-based)
+resource "aws_lambda_function" "api" {
+  function_name = "${var.project_name}-api"
+  role         = aws_iam_role.lambda_role.arn
+  
+  package_type = "Image"
+  image_uri    = "${aws_ecr_repository.backend.repository_url}:latest"
+  
+  timeout     = 300  # 5 minutes
+  memory_size = 512
+
+  environment {
+    variables = {
+      JWT_SECRET_KEY        = "this-is-spar-tan"
+      APP_AWS_REGION        = var.aws_region
+      DYNAMODB_TABLE_PREFIX = var.table_prefix
+      S3_BUCKET            = aws_s3_bucket.uploads.bucket
+      FILE_BUCKET          = aws_s3_bucket.uploads.bucket
+      BEDROCK_REGION       = "us-west-2"
+    }
+  }
+
+  tags = {
+    Name        = "Backend API Function"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+
+  lifecycle {
+    ignore_changes = [image_uri]
+  }
+}

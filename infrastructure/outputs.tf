@@ -36,10 +36,10 @@ output "ecr_repository_url" {
   value       = aws_ecr_repository.backend.repository_url
 }
 
-# output "lambda_function_name" {
-#   description = "Lambda function name"
-#   value       = aws_lambda_function.api.function_name
-# }
+output "lambda_function_name" {
+  description = "Lambda function name"
+  value       = aws_lambda_function.api.function_name
+}
 
 # API outputs
 output "api_gateway_url" {
