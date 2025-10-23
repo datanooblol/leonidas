@@ -35,10 +35,16 @@ jobs:
       if: github.ref == 'refs/heads/main'
       run: |
         # Import existing resources (ignore errors if they don't exist)
-        terraform import aws_ecr_repository.backend leonidas-backend || true
-        terraform import aws_iam_role.lambda_role leonidas-lambda-role || true
-        terraform import aws_s3_bucket.uploads leonidas-dev-uploads || true
-        terraform import aws_api_gateway_domain_name.api leonidas-api.datanooblol.com || true
+        terraform import -input=false aws_ecr_repository.backend leonidas-backend || true
+        terraform import -input=false aws_iam_role.lambda_role leonidas-lambda-role || true
+        terraform import -input=false aws_s3_bucket.uploads leonidas-dev-uploads || true
+        terraform import -input=false aws_api_gateway_domain_name.api leonidas-api.datanooblol.com || true
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        TF_VAR_github_token: ${{ secrets.AMPLIFY_TOKEN }}
+        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+        TF_VAR_github_repository: ${{ secrets.REPO_NAME }}
         
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
