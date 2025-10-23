@@ -39,6 +39,8 @@ jobs:
         terraform import -input=false aws_iam_role.lambda_role leonidas-lambda-role || true
         terraform import -input=false aws_s3_bucket.uploads leonidas-dev-uploads || true
         terraform import -input=false aws_api_gateway_domain_name.api leonidas-api.datanooblol.com || true
+        terraform import -input=false aws_api_gateway_domain_name.api_www www.leonidas-api.datanooblol.com || true
+        terraform import -input=false aws_amplify_app.frontend d1n9fnp6rrvivj || true
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

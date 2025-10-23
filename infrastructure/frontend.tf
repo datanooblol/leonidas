@@ -59,7 +59,7 @@ resource "aws_amplify_domain_association" "main" {
   # WWW subdomain for corporate networks
   sub_domain {
     branch_name = aws_amplify_branch.main.branch_name
-    prefix      = "www.leonidas"
+    prefix      = "www-leonidas"
   }
 
   depends_on = [aws_acm_certificate_validation.main]
