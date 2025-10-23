@@ -77,21 +77,9 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: ${{ env.API_URL }}
 
-      - name: Deploy to Amplify
+      - name: Update Amplify Environment Variables
         run: |
-          # Get Amplify App ID
           APP_ID=$(aws amplify list-apps --query "apps[?name=='leonidas-frontend'].appId" --output text)
-
-          # Create deployment package
-          cd out
-          zip -r ../deployment.zip .
-          cd ..
-
-          # Upload to S3 (Amplify uses S3 for deployments)
-          aws s3 cp deployment.zip s3://amplify-deployments-$APP_ID/deployment-$(date +%s).zip
-
-          # Trigger manual deployment
-          aws amplify start-deployment --app-id $APP_ID --branch-name main
-
-          echo "✅ Frontend deployed successfully!"
-          echo "🌐 URL: https://leonidas.datanooblol.com"
+          aws amplify update-app --app-id $APP_ID --environment-variables NEXT_PUBLIC_API_URL=${{ env.API_URL }}
+          echo "✅ Updated Amplify environment variables"
+          echo "🌐 Amplify will auto-deploy from GitHub push"
