@@ -9,16 +9,24 @@ resource "aws_iam_role" "amplify_role" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "amplify.amazonaws.com"
+          Service = [
+            "amplify.amazonaws.com",
+            "codebuild.amazonaws.com"
+          ]
         }
       }
     ]
   })
 }
 
-# Attach basic Amplify policy
+# Attach basic Amplify policies
 resource "aws_iam_role_policy_attachment" "amplify_backend_deploy" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess-Amplify"
+  role       = aws_iam_role.amplify_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "amplify_service_role" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmplifyBackendDeployFullAccess"
   role       = aws_iam_role.amplify_role.name
 }
 
@@ -26,7 +34,7 @@ resource "aws_iam_role_policy_attachment" "amplify_backend_deploy" {
 resource "aws_amplify_app" "frontend" {
   name       = "${var.project_name}-frontend"
   repository = var.github_repository
-  iam_service_role_arn = aws_iam_role.amplify_role.arn
+
 
   access_token = var.github_token
 
