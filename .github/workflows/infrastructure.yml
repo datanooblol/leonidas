@@ -27,6 +27,8 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        TF_VAR_github_token: ${{ secrets.AMPLIFY_TOKEN }}
+        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
         
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
@@ -34,3 +36,5 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        TF_VAR_github_token: ${{ secrets.AMPLIFY_TOKEN }}
+        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
