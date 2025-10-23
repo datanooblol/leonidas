@@ -11,7 +11,7 @@ class Settings:
     JWT_EXPIRATION_HOURS: int = 24
     
     # AWS Configuration
-    AWS_REGION: str = os.getenv("AWS_REGION", "ap-southeast-1")
+    AWS_REGION: str = os.getenv("APP_AWS_REGION", "ap-southeast-1")
     
     # DynamoDB Configuration
     DYNAMODB_TABLE_PREFIX: str = os.getenv("DYNAMODB_TABLE_PREFIX", "leonidas_dev_")

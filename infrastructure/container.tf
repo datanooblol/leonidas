@@ -99,14 +99,16 @@ resource "aws_lambda_function" "api" {
   package_type = "Image"
   image_uri    = "${aws_ecr_repository.backend.repository_url}:latest"
   
-  timeout     = 30
+  timeout     = 300  # 5 minutes
   memory_size = 512
 
   environment {
     variables = {
+      JWT_SECRET_KEY        = "this-is-spar-tan"
+      APP_AWS_REGION        = var.aws_region  # Using APP_AWS_REGION since AWS_REGION is reserved
       DYNAMODB_TABLE_PREFIX = var.table_prefix
-      S3_BUCKET_NAME       = aws_s3_bucket.uploads.bucket
-      AWS_REGION           = var.aws_region
+      S3_BUCKET            = aws_s3_bucket.uploads.bucket
+      BEDROCK_REGION       = "us-west-2"
     }
   }
 
