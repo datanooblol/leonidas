@@ -1,5 +1,6 @@
 # Data source for existing hosted zone
 data "aws_route53_zone" "main" {
+  provider     = aws.us_east_1
   name         = var.domain_name
   private_zone = false
 }
