@@ -2,9 +2,9 @@ name: Frontend
 
 on:
   push:
-    paths: ['frontend/**']
+    paths: ["frontend/**"]
   pull_request:
-    paths: ['frontend/**']
+    paths: ["frontend/**"]
 
 jobs:
   build:
@@ -12,26 +12,26 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-        
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Build
-      run: npm run build
-      
-    - name: Test
-      run: npm test
-      
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
   deploy:
     needs: build
     if: github.ref == 'refs/heads/main'
@@ -39,47 +39,59 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-        
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Build for production
-      run: npm run build
-      env:
-        NEXT_PUBLIC_API_URL: https://leonidas-api.datanooblol.com
-        
-    - name: Configure AWS
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-        
-    - name: Deploy to Amplify
-      run: |
-        # Get Amplify App ID
-        APP_ID=$(aws amplify list-apps --query "apps[?name=='leonidas-frontend'].appId" --output text)
-        
-        # Create deployment package
-        cd out
-        zip -r ../deployment.zip .
-        cd ..
-        
-        # Upload to S3 (Amplify uses S3 for deployments)
-        aws s3 cp deployment.zip s3://amplify-deployments-$APP_ID/deployment-$(date +%s).zip
-        
-        # Trigger manual deployment
-        aws amplify start-deployment --app-id $APP_ID --branch-name main
-        
-        echo "✅ Frontend deployed successfully!"
-        echo "🌐 URL: https://leonidas.datanooblol.com"
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Get API URL from Terraform
+        run: |
+          cd ../infrastructure
+          terraform init
+          API_URL=$(terraform output -raw api_gateway_url)
+          echo "API_URL=$API_URL" >> $GITHUB_ENV
+
+      - name: Build for production
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ env.API_URL }}
+
+      - name: Deploy to Amplify
+        run: |
+          # Get Amplify App ID
+          APP_ID=$(aws amplify list-apps --query "apps[?name=='leonidas-frontend'].appId" --output text)
+
+          # Create deployment package
+          cd out
+          zip -r ../deployment.zip .
+          cd ..
+
+          # Upload to S3 (Amplify uses S3 for deployments)
+          aws s3 cp deployment.zip s3://amplify-deployments-$APP_ID/deployment-$(date +%s).zip
+
+          # Trigger manual deployment
+          aws amplify start-deployment --app-id $APP_ID --branch-name main
+
+          echo "✅ Frontend deployed successfully!"
+          echo "🌐 URL: https://leonidas.datanooblol.com"
