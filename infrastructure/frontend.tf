@@ -1,7 +1,32 @@
+# IAM role for Amplify
+resource "aws_iam_role" "amplify_role" {
+  name = "${var.project_name}-amplify-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "amplify.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# Attach basic Amplify policy
+resource "aws_iam_role_policy_attachment" "amplify_backend_deploy" {
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess-Amplify"
+  role       = aws_iam_role.amplify_role.name
+}
+
 # Amplify App
 resource "aws_amplify_app" "frontend" {
   name       = "${var.project_name}-frontend"
   repository = var.github_repository
+  iam_service_role_arn = aws_iam_role.amplify_role.arn
 
   access_token = var.github_token
 
