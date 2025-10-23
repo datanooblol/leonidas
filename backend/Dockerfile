@@ -7,7 +7,7 @@ RUN pip install uv
 COPY pyproject.toml ${LAMBDA_TASK_ROOT}
 
 # Install dependencies to system Python
-RUN uv pip install --system -e .
+RUN uv pip install --system --no-dev -e .
 
 # Copy application code
 COPY package/ ${LAMBDA_TASK_ROOT}/package/
