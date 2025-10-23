@@ -1,17 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export default function HealthPage() {
-  const [status, setStatus] = useState<string>('');
+  const [status, setStatus] = useState<string>("");
   const [httpStatus, setHttpStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        console.log('API URL:', apiUrl);
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        console.log("API URL:", apiUrl);
         const response = await fetch(`${apiUrl}/health`);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -20,7 +21,9 @@ export default function HealthPage() {
         setStatus(data.status);
         setHttpStatus(response.status);
       } catch (error) {
-        setStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setStatus(
+          `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
         setHttpStatus(null);
       } finally {
         setLoading(false);
@@ -30,7 +33,7 @@ export default function HealthPage() {
     checkHealth();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading....</div>;
 
   return (
     <div>
