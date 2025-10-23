@@ -31,6 +31,15 @@ jobs:
         TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
         TF_VAR_github_repository: ${{ secrets.REPO_NAME }}
         
+    - name: Import Existing Resources
+      if: github.ref == 'refs/heads/main'
+      run: |
+        # Import existing resources (ignore errors if they don't exist)
+        terraform import aws_ecr_repository.backend leonidas-backend || true
+        terraform import aws_iam_role.lambda_role leonidas-lambda-role || true
+        terraform import aws_s3_bucket.uploads leonidas-dev-uploads || true
+        terraform import aws_api_gateway_domain_name.api leonidas-api.datanooblol.com || true
+        
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
       run: terraform apply -auto-approve
