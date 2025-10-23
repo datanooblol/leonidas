@@ -22,29 +22,7 @@ jobs:
     - name: Terraform Init
       run: terraform init
       
-    - name: Import Existing Resources
-      run: |
-        # Import existing resources (ignore errors if they don't exist)
-        echo "Importing existing AWS resources..."
-        
-        # Storage
-        terraform import -input=false aws_s3_bucket.uploads leonidas-dev-uploads || true
-        
-        # API Gateway Domain (the main issue)
-        terraform import -input=false aws_api_gateway_domain_name.api leonidas-api.datanooblol.com || true
-        
-        # Amplify App and Domain Association
-        terraform import -input=false aws_amplify_app.frontend d2cwpnzofa7j2w || true
-        terraform import -input=false aws_amplify_domain_association.main d2cwpnzofa7j2w,datanooblol.com || true
-        
-        echo "Import completed!"
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        TF_VAR_github_token: ${{ secrets.AMPLIFY_TOKEN }}
-        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-        TF_VAR_github_repository: ${{ secrets.REPO_NAME }}
-        
+
     - name: Terraform Plan
       run: terraform plan
       env:

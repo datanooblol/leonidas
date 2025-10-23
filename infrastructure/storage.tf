@@ -1,6 +1,11 @@
+# Random suffix for unique bucket name
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
 # S3 bucket for file uploads
 resource "aws_s3_bucket" "uploads" {
-  bucket = "${var.project_name}-${var.environment}-uploads"
+  bucket = "${var.project_name}-${var.environment}-uploads-${random_id.bucket_suffix.hex}"
 
   tags = {
     Name        = "File Uploads Bucket"

@@ -29,39 +29,51 @@ resource "aws_api_gateway_method" "proxy" {
   authorization = "NONE"
 }
 
-# API Gateway integration with Lambda
-resource "aws_api_gateway_integration" "lambda" {
-  rest_api_id = aws_api_gateway_rest_api.main.id
-  resource_id = aws_api_gateway_method.proxy.resource_id
-  http_method = aws_api_gateway_method.proxy.http_method
+# API Gateway integration with Lambda - Commented out until Lambda is created
+# resource "aws_api_gateway_integration" "lambda" {
+#   rest_api_id = aws_api_gateway_rest_api.main.id
+#   resource_id = aws_api_gateway_method.proxy.resource_id
+#   http_method = aws_api_gateway_method.proxy.http_method
+#
+#   integration_http_method = "POST"
+#   type                   = "AWS_PROXY"
+#   uri                    = aws_lambda_function.api.invoke_arn
+# }
+#
+# # Lambda permission for API Gateway
+# resource "aws_lambda_permission" "api_gw" {
+#   statement_id  = "AllowExecutionFromAPIGateway"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.api.function_name
+#   principal     = "apigateway.amazonaws.com"
+#   source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
+# }
 
-  integration_http_method = "POST"
-  type                   = "AWS_PROXY"
-  uri                    = aws_lambda_function.api.invoke_arn
-}
-
-# Lambda permission for API Gateway
-resource "aws_lambda_permission" "api_gw" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
-}
-
-# API Gateway deployment
-resource "aws_api_gateway_deployment" "main" {
-  depends_on = [
-    aws_api_gateway_integration.lambda,
-  ]
-
-  rest_api_id = aws_api_gateway_rest_api.main.id
-  stage_name  = var.environment
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+# API Gateway deployment - Commented out until Lambda integration is added
+# resource "aws_api_gateway_deployment" "main" {
+#   depends_on = [
+#     aws_api_gateway_integration.lambda,
+#   ]
+#
+#   rest_api_id = aws_api_gateway_rest_api.main.id
+#
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
+#
+# # API Gateway stage
+# resource "aws_api_gateway_stage" "main" {
+#   deployment_id = aws_api_gateway_deployment.main.id
+#   rest_api_id   = aws_api_gateway_rest_api.main.id
+#   stage_name    = var.environment
+#
+#   tags = {
+#     Name        = "API Stage"
+#     Environment = var.environment
+#     Project     = var.project_name
+#   }
+# }
 
 # API Gateway custom domain (non-www)
 resource "aws_api_gateway_domain_name" "api" {
@@ -75,12 +87,12 @@ resource "aws_api_gateway_domain_name" "api" {
   }
 }
 
-# API Gateway base path mapping (non-www)
-resource "aws_api_gateway_base_path_mapping" "api" {
-  api_id      = aws_api_gateway_rest_api.main.id
-  stage_name  = aws_api_gateway_deployment.main.stage_name
-  domain_name = aws_api_gateway_domain_name.api.domain_name
-}
+# API Gateway base path mapping (non-www) - Commented out until stage is created
+# resource "aws_api_gateway_base_path_mapping" "api" {
+#   api_id      = aws_api_gateway_rest_api.main.id
+#   stage_name  = aws_api_gateway_stage.main.stage_name
+#   domain_name = aws_api_gateway_domain_name.api.domain_name
+# }
 
 # Route53 record for API (non-www)
 resource "aws_route53_record" "api" {

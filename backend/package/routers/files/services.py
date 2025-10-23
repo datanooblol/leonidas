@@ -27,7 +27,7 @@ def generate_presigned_upload_url(project_id: str, user_id: str, filename: str) 
     try:
         # Generate presigned POST URL
         response = s3_client.generate_presigned_post(
-            Bucket=settings.S3_BUCKET,
+            Bucket=settings.FILE_BUCKET,
             Key=s3_key,
             Fields={"Content-Type": "text/csv"},
             Conditions=[
@@ -71,7 +71,7 @@ def generate_presigned_download_url(file_id: str, user_id: str) -> PresignedUrlR
         # Generate presigned GET URL
         download_url = s3_client.generate_presigned_url(
             'get_object',
-            Params={'Bucket': settings.S3_BUCKET, 'Key': file_record.s3_key},
+            Params={'Bucket': settings.FILE_BUCKET, 'Key': file_record.s3_key},
             ExpiresIn=3600  # 1 hour
         )
         
@@ -174,7 +174,7 @@ def delete_user_file(file_id: str, user_id: str) -> dict:
     try:
         # Delete from S3
         s3_client.delete_object(
-            Bucket=settings.S3_BUCKET,
+            Bucket=settings.FILE_BUCKET,
             Key=file_record.s3_key
         )
         
