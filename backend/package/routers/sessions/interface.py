@@ -9,7 +9,7 @@ class SessionUpdate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
 
 class SessionResponse(BaseModel):
-    id: str
+    session_id: str  # Changed from 'id' to match database field
     project_id: str
     name: str
     created_at: datetime

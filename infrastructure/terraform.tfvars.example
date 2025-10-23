@@ -1,0 +1,15 @@
+# AWS Configuration
+aws_region = "ap-southeast-1"
+aws_profile = "dev"
+
+# Project Configuration
+project_name = "leonidas"
+environment = "dev"
+table_prefix = "leonidas_dev_"
+
+# Domain Configuration (must exist in Route53)
+domain_name = "datanooblol.com"
+
+# GitHub Configuration for Amplify
+github_token = "ghp_your_github_personal_access_token"
+github_repository = "https://github.com/your-username/leonidas"

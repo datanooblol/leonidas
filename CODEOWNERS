@@ -1,0 +1,14 @@
+# Global owner (replace with your GitHub username)
+* @your-github-username
+
+# Infrastructure team (replace with actual username)
+/infrastructure/ @infrastructure-engineer-username
+
+# Backend team (replace with actual username)
+/backend/ @backend-developer-username
+
+# Frontend team (replace with actual username)
+/frontend/ @frontend-developer-username
+
+# CI/CD workflows
+/.github/ @your-github-username

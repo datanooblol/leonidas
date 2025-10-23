@@ -1,0 +1,41 @@
+name: Integration
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check changed files
+      id: changes
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          infrastructure:
+            - 'infrastructure/**'
+          backend:
+            - 'backend/**'
+          frontend:
+            - 'frontend/**'
+            
+    - name: Infrastructure check
+      if: steps.changes.outputs.infrastructure == 'true'
+      run: echo "Infrastructure changes detected"
+      
+    - name: Backend check
+      if: steps.changes.outputs.backend == 'true'
+      run: echo "Backend changes detected"
+      
+    - name: Frontend check
+      if: steps.changes.outputs.frontend == 'true'
+      run: echo "Frontend changes detected"
+      
+    - name: Run integration tests
+      run: |
+        echo "Running cross-component integration tests..."
+        # Add your integration test commands here

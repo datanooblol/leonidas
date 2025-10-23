@@ -14,8 +14,3 @@ def register(user_data: UserRegister):
 def login(user_data: UserLogin):
     """Login user"""
     return login_user(user_data)
-
-@router.post("/logout")
-def logout(current_user: str = Depends(get_current_user)):
-    """Logout user (client should discard token)"""
-    return {"message": "Successfully logged out"}

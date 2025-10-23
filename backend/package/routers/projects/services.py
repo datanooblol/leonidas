@@ -8,11 +8,11 @@ def create_user_project(user_id: str, project_data: ProjectCreate) -> ProjectRes
     project = create_project(user_id, project_data.name, project_data.description)
     
     return ProjectResponse(
-        id=project['project_id'],
-        name=project['name'],
-        description=project['description'],
-        created_at=datetime.fromisoformat(project['created_at']),
-        updated_at=datetime.fromisoformat(project['updated_at'])
+        project_id=project.project_id,  # Use .project_id instead of ['project_id']
+        name=project.name,
+        description=project.description,
+        created_at=datetime.fromisoformat(project.created_at),
+        updated_at=datetime.fromisoformat(project.updated_at)
     )
 
 def get_projects_for_user(user_id: str) -> ProjectListResponse:
@@ -21,11 +21,11 @@ def get_projects_for_user(user_id: str) -> ProjectListResponse:
     
     project_responses = [
         ProjectResponse(
-            id=project['project_id'],
-            name=project['name'],
-            description=project['description'],
-            created_at=datetime.fromisoformat(project['created_at']),
-            updated_at=datetime.fromisoformat(project['updated_at'])
+            project_id=project.project_id,  # Use .project_id
+            name=project.name,
+            description=project.description,
+            created_at=datetime.fromisoformat(project.created_at),
+            updated_at=datetime.fromisoformat(project.updated_at)
         )
         for project in projects
     ]
@@ -39,11 +39,11 @@ def get_project_details(project_id: str, user_id: str) -> ProjectResponse:
         raise HTTPException(status_code=404, detail="Project not found")
     
     return ProjectResponse(
-        id=project['project_id'],
-        name=project['name'],
-        description=project['description'],
-        created_at=datetime.fromisoformat(project['created_at']),
-        updated_at=datetime.fromisoformat(project['updated_at'])
+        project_id=project.project_id,  # Use .project_id
+        name=project.name,
+        description=project.description,
+        created_at=datetime.fromisoformat(project.created_at),
+        updated_at=datetime.fromisoformat(project.updated_at)
     )
 
 def update_user_project(project_id: str, user_id: str, project_data: ProjectUpdate) -> ProjectResponse:
@@ -53,11 +53,11 @@ def update_user_project(project_id: str, user_id: str, project_data: ProjectUpda
         raise HTTPException(status_code=404, detail="Project not found")
     
     return ProjectResponse(
-        id=project['project_id'],
-        name=project['name'],
-        description=project['description'],
-        created_at=datetime.fromisoformat(project['created_at']),
-        updated_at=datetime.fromisoformat(project['updated_at'])
+        project_id=project.project_id,  # Use .project_id
+        name=project.name,
+        description=project.description,
+        created_at=datetime.fromisoformat(project.created_at),
+        updated_at=datetime.fromisoformat(project.updated_at)
     )
 
 def delete_user_project(project_id: str, user_id: str) -> dict:

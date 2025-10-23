@@ -1,30 +1,29 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List
-from package.core.llm import ModelResponse
+from package.core.llm import Role
+from typing import Optional, Any
 
 class MessageSend(BaseModel):
     content: str
 
-class MessageResponse(BaseModel):
-    id: str
-    session_id: str
-    content: str
-    role: str  # "user" or "assistant"
-    created_at: datetime
-
 class ChatResponse(BaseModel):
-    user_message: MessageResponse
-    ai_response: MessageResponse
-    model_response: ModelResponse
+    id:str
+    role:Role
+    content:str
+    response_time_ms:int
+    input_tokens:int
+    output_tokens:int
+    reason:Optional[str] = Field(description="A reason why LLM answers this way", default=None)
+    artifacts:Optional[List[Any]] = Field(description="Artifacts can be html, figure, image or else", default=None)
 
-class MessageUpdate(BaseModel):
-    content: str = Field(..., min_length=1, max_length=5000)
-
-class MessageListResponse(BaseModel):
-    messages: List[MessageResponse]
+# interface.py
+class MessageHistoryResponse(BaseModel):
+    message_id: str
+    content: str
+    role: Role
+    created_at: datetime
 
 class ChatHistoryResponse(BaseModel):
     session_id: str
-    total_messages: int
-    messages: List[MessageResponse]
+    messages: List[MessageHistoryResponse]

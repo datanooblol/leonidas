@@ -1,8 +1,8 @@
-# Backend Codebase Structure
+# Leonidas Backend - AI Data Scientist Platform
 
 ## Design Philosophy
 
-This backend follows a **domain-driven microservice architecture** where each feature domain is completely self-contained. This approach enables easy development, maintenance, and future scaling to separate microservices.
+This backend follows a **minimal domain-driven architecture** with complete type safety. Each feature domain is self-contained with Pydantic schemas for all data operations, enabling easy development, maintenance, and future scaling.
 
 ## Project Structure
 
@@ -11,115 +11,208 @@ backend/
 ├── main.py                           # FastAPI app setup + router registration
 ├── package/
 │   ├── __init__.py                  # Package initialization
-│   ├── core/                        # Shared utilities only
+│   ├── core/                        # Shared utilities
 │   │   ├── __init__.py              # Core package initialization
 │   │   ├── config.py                # Environment variables
-│   │   └── auth_middleware.py       # JWT validation middleware
+│   │   ├── auth_middleware.py       # JWT validation middleware
+│   │   └── llm.py                   # AWS Bedrock integration + Role enum
 │   └── routers/
-│       ├── auth/
-│       │   ├── __init__.py          # Auth package initialization
-│       │   ├── endpoint.py          # Authentication routes (/auth/*)
-│       │   ├── services.py          # Auth business logic
-│       │   ├── interface.py         # Auth Pydantic models
-│       │   └── database.py          # Users table operations
-│       ├── projects/
-│       │   ├── __init__.py          # Projects package initialization
-│       │   ├── endpoint.py          # Project routes (/projects/*)
+│       ├── auth/                    # User authentication
+│       │   ├── endpoint.py          # /register, /login
+│       │   ├── services.py          # bcrypt hashing, JWT tokens
+│       │   ├── interface.py         # UserRegister, UserLogin, AuthResponse
+│       │   └── database.py          # UserDB schema + users table ops
+│       ├── projects/                # Project management
+│       │   ├── endpoint.py          # CRUD + nested sessions/files
 │       │   ├── services.py          # Project business logic
-│       │   ├── interface.py         # Project Pydantic models
-│       │   └── database.py          # Projects table operations
-│       ├── sessions/
-│       │   ├── __init__.py          # Sessions package initialization
-│       │   ├── endpoint.py          # Session routes (/sessions/*)
-│       │   ├── services.py          # Session business logic
-│       │   ├── interface.py         # Session Pydantic models
-│       │   └── database.py          # Sessions table operations
-│       ├── files/
-│       │   ├── __init__.py          # Files package initialization
-│       │   ├── endpoint.py          # File routes (/files/*)
-│       │   ├── services.py          # S3 upload/download logic
-│       │   ├── interface.py         # File Pydantic models
-│       │   └── database.py          # Files table operations
-│       └── chat/
-│           ├── __init__.py          # Chat package initialization
-│           ├── endpoint.py          # Chat routes (/sessions/*/messages)
-│           ├── services.py          # Bedrock AI integration
-│           ├── interface.py         # Chat Pydantic models
-│           └── database.py          # Messages table operations
+│       │   ├── interface.py         # ProjectCreate, ProjectResponse
+│       │   └── database.py          # ProjectDB schema + projects table
+│       ├── sessions/                # Chat sessions
+│       │   ├── endpoint.py          # Session CRUD + refresh
+│       │   ├── services.py          # Session management
+│       │   ├── interface.py         # SessionCreate, SessionResponse
+│       │   └── database.py          # SessionDB schema + sessions table
+│       ├── files/                   # File management
+│       │   ├── endpoint.py          # Download, confirm, rename, delete
+│       │   ├── services.py          # S3 presigned URLs + metadata
+│       │   ├── interface.py         # FileResponse + PresignedUrlResponse
+│       │   └── database.py          # FileDB + FileStatus/FileSource enums
+│       └── chat/                    # AI chatbot "DS Bro"
+│           ├── endpoint.py          # POST/GET /sessions/{id}/chat
+│           ├── services.py          # DS Bro personality + conversation
+│           ├── interface.py         # MessageSend, ChatResponse
+│           └── database.py          # MessageDB schema + messages table
 ```
 
-## File Responsibilities
+## Architecture Layers
 
-### Per Domain Structure
-Each domain folder contains exactly 4 files:
-
-- **`endpoint.py`** - FastAPI router with HTTP endpoints
-- **`services.py`** - Business logic and external service integrations
-- **`interface.py`** - Pydantic models for request/response validation
-- **`database.py`** - DynamoDB operations and data access
+### Per Domain Structure (4 files each)
+- **`database.py`** - Pydantic schemas + type-safe DynamoDB operations
+- **`services.py`** - Business logic + external service integrations  
+- **`interface.py`** - API request/response models
+- **`endpoint.py`** - FastAPI routes + HTTP handling
 
 ### Core Utilities
-- **`main.py`** - Application setup and router registration
-- **`package/core/config.py`** - Environment variables and configuration
-- **`package/core/auth_middleware.py`** - JWT token validation
+- **`main.py`** - FastAPI app + CORS + router registration
+- **`core/config.py`** - Environment variables (AWS, JWT, S3)
+- **`core/auth_middleware.py`** - JWT token validation + user extraction
+- **`core/llm.py`** - AWS Bedrock integration + Role enum + ModelResponse
+
+## Key Features Implemented
+
+### Authentication System
+- JWT-based auth with bcrypt password hashing
+- User registration and login endpoints
+- Middleware for protected routes
+
+### Project Management
+- CRUD operations for data science projects
+- User ownership validation
+- Nested resources (sessions, files)
+
+### Chat System - "DS Bro" AI Assistant
+- AWS Bedrock integration with OpenAI models
+- Friendly data scientist personality
+- Conversation history with chronological ordering
+- Message CRUD operations
+
+### File Management
+- S3 presigned URL upload/download flow
+- File status tracking (uploading, completed, processing, failed)
+- File source tracking (user_upload, app_generated)
+- CSV file validation and metadata storage
+
+### Session Management
+- Chat session organization within projects
+- Session refresh/restart functionality
+- Project-scoped session listing
+
+## Type Safety & Data Flow
+
+### Database Schemas (Pydantic)
+- **UserDB** - User accounts with email validation
+- **ProjectDB** - Projects with auto-timestamps
+- **SessionDB** - Chat sessions linked to projects
+- **MessageDB** - Chat messages with Role enum (USER/ASSISTANT)
+- **FileDB** - File metadata with FileStatus/FileSource enums
+
+### Enums for Type Safety
+- **Role** - USER, ASSISTANT (for chat messages)
+- **FileStatus** - UPLOADING, COMPLETED, PROCESSING, FAILED
+- **FileSource** - USER_UPLOAD, APP_GENERATED
+
+### DynamoDB Design
+- **Efficient GSI usage** - UserIndex, ProjectIndex, SessionIndex
+- **Chronological ordering** - created_at sort keys for chat history
+- **Pay-per-request billing** - Cost-effective scaling
+- **User ownership validation** - Security through data isolation
 
 ## Development Benefits
 
-### Easy Development
-- **Small files** - Each file has single responsibility (~50-100 lines)
-- **Clear patterns** - Every domain follows identical structure
-- **No confusion** - Always know where to find/add code
-- **Fast navigation** - Everything for one feature in one folder
+### Minimal & Clean
+- **Type-safe operations** - Pydantic validation everywhere
+- **Consistent patterns** - Same 4-file structure across domains
+- **No bloat** - Only essential code, no unnecessary abstractions
+- **Clear separation** - Database → Services → Interface → Endpoints
 
-### Easy Maintenance
-- **Bug isolation** - Issues are contained within single domain
-- **Feature additions** - New functionality goes to relevant domain
-- **Independent testing** - Test each domain in isolation
-- **Focused code reviews** - Changes are localized and easy to review
+### Production Ready
+- **Error handling** - Proper HTTP exceptions and validation
+- **Security** - JWT auth + user ownership checks
+- **Scalability** - Efficient DynamoDB queries with GSI
+- **Maintainability** - Self-documenting code with type hints
 
-### Easy Scaling
-- **Team collaboration** - Different developers can own different domains
-- **Performance optimization** - Optimize specific domains independently
-- **Microservice extraction** - Copy domain folder to create separate service
-- **Zero dependencies** - Domains don't depend on each other
+## API Endpoints
 
-## Development Workflow
+### Authentication
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
 
-1. **Choose domain** (e.g., projects)
-2. **Define API models** in `interface.py`
-3. **Build database layer** in `database.py`
-4. **Implement business logic** in `services.py`
-5. **Create HTTP endpoints** in `endpoint.py`
-6. **Register router** in `main.py`
+### Projects
+- `GET /projects` - List user projects
+- `POST /projects` - Create project
+- `GET /projects/{id}` - Get project details
+- `PUT /projects/{id}` - Update project
+- `DELETE /projects/{id}` - Delete project
 
-## Example Implementation Flow
+### Sessions (nested under projects)
+- `GET /projects/{id}/sessions` - List project sessions
+- `POST /projects/{id}/sessions` - Create session
+- `GET /sessions/{id}` - Get session details
+- `PUT /sessions/{id}` - Update session
+- `POST /sessions/{id}/refresh` - Refresh session
+- `DELETE /sessions/{id}` - Delete session
+
+### Chat (DS Bro AI)
+- `POST /sessions/{id}/chat` - Send message to DS Bro
+- `GET /sessions/{id}/chat` - Get chat history
+
+### Files
+- `POST /projects/{id}/files/upload-url` - Get upload URL
+- `GET /projects/{id}/files` - List project files
+- `POST /files/{id}/confirm` - Confirm upload
+- `GET /files/{id}/download-url` - Get download URL
+- `PUT /files/{id}/rename` - Rename file
+- `DELETE /files/{id}` - Delete file
+
+## Example Type-Safe Flow
 
 ```python
-# 1. Define models (interface.py)
-class ProjectCreate(BaseModel):
-    name: str
-    description: str
+# 1. Database schema (database.py)
+class MessageDB(BaseModel):
+    message_id: str = Field(default_factory=lambda: str(uuid4()))
+    session_id: str
+    content: str
+    role: Role  # Enum: USER or ASSISTANT
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
-# 2. Database operations (database.py)
-def create_project(user_id: str, project_data: ProjectCreate):
-    # DynamoDB put_item logic
+# 2. Database operation (database.py)
+def create_user_message(session_id: str, user_id: str, content: str) -> MessageDB:
+    message = MessageDB(session_id=session_id, user_id=user_id, content=content, role=Role.USER)
+    messages_table.put_item(Item=message.model_dump())
+    return message
 
 # 3. Business logic (services.py)
-def create_user_project(user_id: str, project_data: ProjectCreate):
-    # Validation + call database layer
+def send_message_to_session(user_id: str, session_id: str, message_data: MessageSend) -> ChatResponse:
+    validate_session(user_id, session_id)
+    user_msg = create_user_message(session_id, user_id, message_data.content)
+    # AI processing...
+    return ChatResponse(...)
 
 # 4. HTTP endpoint (endpoint.py)
-@router.post("/projects")
-def create_project_endpoint(project: ProjectCreate, user_id: str = Depends(get_current_user)):
-    # Call service layer
+@router.post("/sessions/{session_id}/chat", response_model=ChatResponse)
+def chat(session_id: str, message_data: MessageSend, user_id: str = Depends(get_current_user)):
+    return send_message_to_session(user_id, session_id, message_data)
 ```
+
+## Infrastructure Integration
+
+### AWS Services
+- **DynamoDB** - 5 tables with GSI indexes for efficient queries
+- **S3** - File storage with presigned URL upload/download
+- **AWS Bedrock** - OpenAI model integration for DS Bro chatbot
+- **Terraform** - Infrastructure as Code for all AWS resources
+
+### File Upload Flow
+1. Frontend requests upload URL → `POST /projects/{id}/files/upload-url`
+2. Backend creates DB record (status: UPLOADING) → Returns presigned URL
+3. Frontend uploads directly to S3 → Bypasses backend for performance
+4. Frontend confirms upload → `POST /files/{id}/confirm`
+5. Backend updates status to COMPLETED → File ready for use
+
+### Chat Flow with DS Bro
+1. User sends message → `POST /sessions/{id}/chat`
+2. Backend creates user message record → MessageDB with Role.USER
+3. Backend gets recent chat history → For AI context
+4. Backend calls AWS Bedrock → DS Bro generates response
+5. Backend creates assistant message → MessageDB with Role.ASSISTANT
+6. Returns ChatResponse → With AI message and metadata
 
 ## Future Scalability
 
-This structure enables seamless evolution:
-- **MVP**: Single Lambda with all domains
-- **Growth**: Extract high-traffic domains to separate Lambdas
-- **Scale**: Convert domains to independent microservices
-- **Enterprise**: Each domain becomes separate team ownership
+Minimal architecture enables easy evolution:
+- **Current**: Single FastAPI app with domain separation
+- **Growth**: Extract high-traffic domains (chat, files) to separate services
+- **Scale**: Each domain becomes independent microservice
+- **Enterprise**: Domain-based team ownership with clear boundaries
 
-The modular design ensures no major refactoring is needed at any scale.
+Type-safe schemas and clean separation ensure smooth scaling without architectural debt.

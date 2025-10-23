@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 
 from package.routers.auth.endpoint import router as auth_router
 from package.routers.projects.endpoint import router as projects_router
@@ -39,6 +40,9 @@ def health_check():
 @app.get("/favicon.ico")
 def favicon():
     return {"message": "No favicon"}
+
+# Lambda handler
+handler = Mangum(app)
 
 if __name__ == "__main__":
     import uvicorn

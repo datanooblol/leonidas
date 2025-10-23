@@ -14,11 +14,11 @@ def create_project_session(project_id: str, user_id: str, session_data: SessionC
     session = create_session(project_id, session_data.name)
     
     return SessionResponse(
-        id=session['session_id'],
-        project_id=session['project_id'],
-        name=session['name'],
-        created_at=datetime.fromisoformat(session['created_at']),
-        updated_at=datetime.fromisoformat(session['updated_at'])
+        session_id=session.session_id,  # Use .session_id instead of ['session_id']
+        project_id=session.project_id,
+        name=session.name,
+        created_at=datetime.fromisoformat(session.created_at),
+        updated_at=datetime.fromisoformat(session.updated_at)
     )
 
 def get_sessions_for_project(project_id: str, user_id: str) -> SessionListResponse:
@@ -32,11 +32,11 @@ def get_sessions_for_project(project_id: str, user_id: str) -> SessionListRespon
     
     session_responses = [
         SessionResponse(
-            id=session['session_id'],
-            project_id=session['project_id'],
-            name=session['name'],
-            created_at=datetime.fromisoformat(session['created_at']),
-            updated_at=datetime.fromisoformat(session['updated_at'])
+            session_id=session.session_id,  # Use .session_id
+            project_id=session.project_id,
+            name=session.name,
+            created_at=datetime.fromisoformat(session.created_at),
+            updated_at=datetime.fromisoformat(session.updated_at)
         )
         for session in sessions
     ]
@@ -50,16 +50,16 @@ def get_session_details(session_id: str, user_id: str) -> SessionResponse:
         raise HTTPException(status_code=404, detail="Session not found")
     
     # Verify project ownership
-    project = get_project_by_id(session['project_id'], user_id)
+    project = get_project_by_id(session.project_id, user_id)  # Use .project_id
     if not project:
         raise HTTPException(status_code=404, detail="Session not found")
     
     return SessionResponse(
-        id=session['session_id'],
-        project_id=session['project_id'],
-        name=session['name'],
-        created_at=datetime.fromisoformat(session['created_at']),
-        updated_at=datetime.fromisoformat(session['updated_at'])
+        session_id=session.session_id,  # Use .session_id
+        project_id=session.project_id,
+        name=session.name,
+        created_at=datetime.fromisoformat(session.created_at),
+        updated_at=datetime.fromisoformat(session.updated_at)
     )
 
 def update_user_session(session_id: str, user_id: str, session_data: SessionUpdate) -> SessionResponse:
@@ -69,7 +69,7 @@ def update_user_session(session_id: str, user_id: str, session_data: SessionUpda
         raise HTTPException(status_code=404, detail="Session not found")
     
     # Verify project ownership
-    project = get_project_by_id(session['project_id'], user_id)
+    project = get_project_by_id(session.project_id, user_id)  # Use .project_id
     if not project:
         raise HTTPException(status_code=404, detail="Session not found")
     
@@ -78,11 +78,11 @@ def update_user_session(session_id: str, user_id: str, session_data: SessionUpda
         raise HTTPException(status_code=404, detail="Session not found")
     
     return SessionResponse(
-        id=updated_session['session_id'],
-        project_id=updated_session['project_id'],
-        name=updated_session['name'],
-        created_at=datetime.fromisoformat(updated_session['created_at']),
-        updated_at=datetime.fromisoformat(updated_session['updated_at'])
+        session_id=updated_session.session_id,  # Use .session_id
+        project_id=updated_session.project_id,
+        name=updated_session.name,
+        created_at=datetime.fromisoformat(updated_session.created_at),
+        updated_at=datetime.fromisoformat(updated_session.updated_at)
     )
 
 def refresh_user_session(session_id: str, user_id: str) -> SessionResponse:
@@ -92,7 +92,7 @@ def refresh_user_session(session_id: str, user_id: str) -> SessionResponse:
         raise HTTPException(status_code=404, detail="Session not found")
     
     # Verify project ownership
-    project = get_project_by_id(session['project_id'], user_id)
+    project = get_project_by_id(session.project_id, user_id)  # Use .project_id
     if not project:
         raise HTTPException(status_code=404, detail="Session not found")
     
@@ -101,11 +101,11 @@ def refresh_user_session(session_id: str, user_id: str) -> SessionResponse:
         raise HTTPException(status_code=404, detail="Session not found")
     
     return SessionResponse(
-        id=refreshed_session['session_id'],
-        project_id=refreshed_session['project_id'],
-        name=refreshed_session['name'],
-        created_at=datetime.fromisoformat(refreshed_session['created_at']),
-        updated_at=datetime.fromisoformat(refreshed_session['updated_at'])
+        session_id=refreshed_session.session_id,  # Use .session_id
+        project_id=refreshed_session.project_id,
+        name=refreshed_session.name,
+        created_at=datetime.fromisoformat(refreshed_session.created_at),
+        updated_at=datetime.fromisoformat(refreshed_session.updated_at)
     )
 
 def delete_user_session(session_id: str, user_id: str) -> dict:
@@ -115,7 +115,7 @@ def delete_user_session(session_id: str, user_id: str) -> dict:
         raise HTTPException(status_code=404, detail="Session not found")
     
     # Verify project ownership
-    project = get_project_by_id(session['project_id'], user_id)
+    project = get_project_by_id(session.project_id, user_id)  # Use .project_id
     if not project:
         raise HTTPException(status_code=404, detail="Session not found")
     

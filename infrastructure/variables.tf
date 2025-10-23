@@ -27,3 +27,19 @@ variable "project_name" {
   type        = string
   default     = "leonidas"
 }
+
+variable "domain_name" {
+  description = "Your existing domain name in Route53"
+  type        = string
+}
+
+variable "github_token" {
+  description = "GitHub personal access token for Amplify"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_repository" {
+  description = "GitHub repository URL"
+  type        = string
+}

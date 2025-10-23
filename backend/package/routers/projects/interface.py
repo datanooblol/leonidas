@@ -11,7 +11,7 @@ class ProjectUpdate(BaseModel):
     description: str = Field(..., max_length=500)
 
 class ProjectResponse(BaseModel):
-    id: str
+    project_id: str  # Changed from 'id' to match database field
     name: str
     description: str
     created_at: datetime

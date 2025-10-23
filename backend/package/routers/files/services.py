@@ -2,7 +2,7 @@ import boto3
 from fastapi import HTTPException
 from datetime import datetime
 from uuid import uuid4
-from .database import create_file_record, get_project_files, get_file_by_id, delete_file_record
+from .database import create_file_record, get_project_files, get_file_by_id, delete_file_record, confirm_file_upload_record, update_file_record
 from .interface import PresignedUrlResponse, FileResponse, FileListResponse
 from package.routers.projects.database import get_project_by_id
 from package.core.config import settings
@@ -63,7 +63,7 @@ def generate_presigned_download_url(file_id: str, user_id: str) -> PresignedUrlR
         raise HTTPException(status_code=404, detail="File not found")
     
     # Verify project ownership
-    project = get_project_by_id(file_record['project_id'], user_id)
+    project = get_project_by_id(file_record.project_id, user_id)
     if not project:
         raise HTTPException(status_code=404, detail="File not found")
     
@@ -71,15 +71,14 @@ def generate_presigned_download_url(file_id: str, user_id: str) -> PresignedUrlR
         # Generate presigned GET URL
         download_url = s3_client.generate_presigned_url(
             'get_object',
-            Params={'Bucket': settings.S3_BUCKET, 'Key': file_record['s3_key']},
+            Params={'Bucket': settings.S3_BUCKET, 'Key': file_record.s3_key},
             ExpiresIn=3600  # 1 hour
         )
         
-        return PresignedUrlResponse(url=download_url)
+        return PresignedUrlResponse(url=download_url, file_id=file_record.file_id)
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate download URL: {str(e)}")
-
 
 def confirm_file_upload(file_id: str, user_id: str, size: int) -> FileResponse:
     """Confirm file upload and update record"""
@@ -88,20 +87,22 @@ def confirm_file_upload(file_id: str, user_id: str, size: int) -> FileResponse:
         raise HTTPException(status_code=404, detail="File not found")
     
     # Verify project ownership
-    project = get_project_by_id(file_record['project_id'], user_id)
+    project = get_project_by_id(file_record.project_id, user_id)
     if not project:
         raise HTTPException(status_code=404, detail="File not found")
     
     # Update file record with actual size
-    from .database import confirm_file_upload_record
     updated_record = confirm_file_upload_record(file_id, size)
     
     return FileResponse(
-        id=updated_record['file_id'],
-        project_id=updated_record['project_id'],
-        filename=updated_record['filename'],
-        size=updated_record['size'],
-        created_at=datetime.fromisoformat(updated_record['created_at'])
+        file_id=updated_record.file_id,
+        project_id=updated_record.project_id,
+        filename=updated_record.filename,
+        size=updated_record.size,
+        status=updated_record.status,
+        source=updated_record.source,
+        created_at=datetime.fromisoformat(updated_record.created_at),
+        updated_at=datetime.fromisoformat(updated_record.updated_at)
     )
 
 def rename_file(file_id: str, user_id: str, new_filename: str) -> FileResponse:
@@ -112,7 +113,7 @@ def rename_file(file_id: str, user_id: str, new_filename: str) -> FileResponse:
         raise HTTPException(status_code=404, detail="File not found")
     
     # Verify project ownership
-    project = get_project_by_id(file_record['project_id'], user_id)
+    project = get_project_by_id(file_record.project_id, user_id)
     if not project:
         raise HTTPException(status_code=404, detail="File not found")
     
@@ -121,15 +122,17 @@ def rename_file(file_id: str, user_id: str, new_filename: str) -> FileResponse:
         raise HTTPException(status_code=400, detail="Only CSV files are allowed")
     
     # Update filename in database
-    from .database import update_file_record
     updated_record = update_file_record(file_id, new_filename)
     
     return FileResponse(
-        id=updated_record['file_id'],
-        project_id=updated_record['project_id'],
-        filename=updated_record['filename'],
-        size=updated_record['size'],
-        created_at=datetime.fromisoformat(updated_record['created_at'])
+        file_id=updated_record.file_id,
+        project_id=updated_record.project_id,
+        filename=updated_record.filename,
+        size=updated_record.size,
+        status=updated_record.status,
+        source=updated_record.source,
+        created_at=datetime.fromisoformat(updated_record.created_at),
+        updated_at=datetime.fromisoformat(updated_record.updated_at)
     )
 
 def get_files_for_project(project_id: str, user_id: str) -> FileListResponse:
@@ -143,11 +146,14 @@ def get_files_for_project(project_id: str, user_id: str) -> FileListResponse:
     
     file_responses = [
         FileResponse(
-            id=file['file_id'],
-            project_id=file['project_id'],
-            filename=file['filename'],
-            size=file['size'],
-            created_at=datetime.fromisoformat(file['created_at'])
+            file_id=file.file_id,
+            project_id=file.project_id,
+            filename=file.filename,
+            size=file.size,
+            status=file.status,
+            source=file.source,
+            created_at=datetime.fromisoformat(file.created_at),
+            updated_at=datetime.fromisoformat(file.updated_at)
         )
         for file in files
     ]
@@ -161,7 +167,7 @@ def delete_user_file(file_id: str, user_id: str) -> dict:
         raise HTTPException(status_code=404, detail="File not found")
     
     # Verify project ownership
-    project = get_project_by_id(file_record['project_id'], user_id)
+    project = get_project_by_id(file_record.project_id, user_id)
     if not project:
         raise HTTPException(status_code=404, detail="File not found")
     
@@ -169,7 +175,7 @@ def delete_user_file(file_id: str, user_id: str) -> dict:
         # Delete from S3
         s3_client.delete_object(
             Bucket=settings.S3_BUCKET,
-            Key=file_record['s3_key']
+            Key=file_record.s3_key
         )
         
         # Delete database record

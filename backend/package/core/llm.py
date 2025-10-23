@@ -1,17 +1,26 @@
 import boto3
 from abc import ABC, abstractmethod
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from uuid import uuid4
+from enum import Enum
+import time
 
 def bedrock_driver(messages):
     return [dict(role=m['role'], content=[dict(text=m['content'])]) for m in messages]
 
+class Role(str, Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+
 class ModelResponse(BaseModel):
     model_name: str
-    role: str
+    role: Role
     content: str
     reason: str
     input_tokens: int
     output_tokens: int
+    response_time_ms: int
+    id: str = Field(default_factory=lambda: str(uuid4()))
 
 def UserMessage(content:str)->dict:
     return dict(role='user', content=content)
@@ -21,7 +30,7 @@ class BaseLLM(ABC):
         self.model_id = model_id
     
     @abstractmethod
-    def OutputMessage(self, response:dict) -> ModelResponse:
+    def OutputMessage(self, response:dict, response_time_ms:int) -> ModelResponse:
         """Abstract method to be implemented by child classes"""
         pass
 
@@ -42,18 +51,20 @@ class BaseBedrock(BaseLLM):
     
     def run(self, system_prompt:str, messages:list)->ModelResponse:
         model = self.get_model()
+        start_time = time.time()
         response = model.converse(
             modelId=self.model_id,
             messages=self.bedrock_driver(messages),
             system=[{"text": system_prompt}]
         )
-        return self.OutputMessage(response)
+        response_time_ms = int((time.time() - start_time) * 1000)
+        return self.OutputMessage(response, response_time_ms)
     
 class BedrockOpenAI(BaseBedrock):
     def __init__(self, model_id="openai.gpt-oss-20b-1:0"):
         super().__init__(model_id)
 
-    def OutputMessage(self, response)->ModelResponse:
+    def OutputMessage(self, response, response_time_ms)->ModelResponse:
         proxy = response['output']['message']
         usage = response['usage']
         return ModelResponse(
@@ -62,5 +73,6 @@ class BedrockOpenAI(BaseBedrock):
             content=proxy['content'][-1]['text'],
             reason=proxy['content'][0]['reasoningContent']['reasoningText']['text'],
             input_tokens=usage['inputTokens'],
-            output_tokens=usage['outputTokens']
-        )        
+            output_tokens=usage['outputTokens'],
+            response_time_ms=response_time_ms
+        )

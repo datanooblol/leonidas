@@ -3,46 +3,69 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from typing import List, Optional
 from package.core.config import settings
+from pydantic import BaseModel, Field
+from enum import Enum
 
 dynamodb = boto3.resource('dynamodb', region_name=settings.AWS_REGION)
 files_table = dynamodb.Table(settings.FILES_TABLE)
 
-def create_file_record(project_id: str, filename: str, s3_key: str, size: int, file_id: str = None) -> dict:
+class FileStatus(str, Enum):
+    UPLOADING = "uploading"
+    COMPLETED = "completed"
+    PROCESSING = "processing"
+    FAILED = "failed"
+
+class FileSource(str, Enum):
+    USER_UPLOAD = "user_upload"
+    APP_GENERATED = "app_generated"
+
+class FileDB(BaseModel):
+    file_id: str = Field(default_factory=lambda: str(uuid4()))
+    project_id: str
+    filename: str
+    s3_key: str
+    size: int
+    status: FileStatus = Field(default=FileStatus.UPLOADING)
+    source: FileSource = Field(default=FileSource.USER_UPLOAD)
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+def create_file_record(project_id: str, filename: str, s3_key: str, size: int, file_id: str = None, status: FileStatus = FileStatus.UPLOADING, source: FileSource = FileSource.USER_UPLOAD) -> FileDB:
     """Create file record in DynamoDB"""
-    if file_id is None:
-        file_id = str(uuid4())
+    if file_id:
+        file_record = FileDB(file_id=file_id, project_id=project_id, filename=filename, s3_key=s3_key, size=size, status=status, source=source)
+    else:
+        file_record = FileDB(project_id=project_id, filename=filename, s3_key=s3_key, size=size, status=status, source=source)
     
-    now = datetime.now(timezone.utc).isoformat()
-    
-    item = {
-        'file_id': file_id,
-        'project_id': project_id,
-        'filename': filename,
-        's3_key': s3_key,
-        'size': size,
-        'created_at': now,
-        'updated_at': now
-    }
-    
-    files_table.put_item(Item=item)
-    return item
+    files_table.put_item(Item=file_record.model_dump())
+    return file_record
 
-def get_project_files(project_id: str) -> List[dict]:
-    """Get all files for a project"""
-    response = files_table.query(
-        IndexName='ProjectIndex',
-        KeyConditionExpression='project_id = :project_id',
-        ExpressionAttributeValues={':project_id': project_id}
-    )
-    return response.get('Items', [])
+def get_project_files(project_id: str, status: FileStatus = None) -> List[FileDB]:
+    """Get all files for a project, optionally filtered by status"""
+    if status:
+        response = files_table.query(
+            IndexName='ProjectIndex',
+            KeyConditionExpression='project_id = :project_id',
+            FilterExpression='#status = :status',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={':project_id': project_id, ':status': status.value}
+        )
+    else:
+        response = files_table.query(
+            IndexName='ProjectIndex',
+            KeyConditionExpression='project_id = :project_id',
+            ExpressionAttributeValues={':project_id': project_id}
+        )
+    return [FileDB(**item) for item in response.get('Items', [])]
 
-def get_file_by_id(file_id: str) -> Optional[dict]:
+def get_file_by_id(file_id: str) -> Optional[FileDB]:
     """Get file by ID"""
     response = files_table.get_item(Key={'file_id': file_id})
-    return response.get('Item')
+    item = response.get('Item')
+    return FileDB(**item) if item else None
 
-def confirm_file_upload_record(file_id: str, size: int) -> dict:
-    """Confirm file upload and update size"""
+def confirm_file_upload_record(file_id: str, size: int) -> Optional[FileDB]:
+    """Confirm file upload and update size and status"""
     file_record = get_file_by_id(file_id)
     if not file_record:
         return None
@@ -51,18 +74,45 @@ def confirm_file_upload_record(file_id: str, size: int) -> dict:
     
     files_table.update_item(
         Key={'file_id': file_id},
-        UpdateExpression='SET size = :size, updated_at = :updated_at',
+        UpdateExpression='SET size = :size, #status = :status, updated_at = :updated_at',
+        ExpressionAttributeNames={'#status': 'status'},
         ExpressionAttributeValues={
             ':size': size,
+            ':status': FileStatus.COMPLETED.value,
             ':updated_at': updated_at
         }
     )
     
-    file_record['size'] = size
-    file_record['updated_at'] = updated_at
+    # Return updated file record
+    file_record.size = size
+    file_record.status = FileStatus.COMPLETED
+    file_record.updated_at = updated_at
     return file_record
 
-def update_file_record(file_id: str, new_filename: str) -> dict:
+def update_file_status(file_id: str, status: FileStatus) -> Optional[FileDB]:
+    """Update file status"""
+    file_record = get_file_by_id(file_id)
+    if not file_record:
+        return None
+    
+    updated_at = datetime.now(timezone.utc).isoformat()
+    
+    files_table.update_item(
+        Key={'file_id': file_id},
+        UpdateExpression='SET #status = :status, updated_at = :updated_at',
+        ExpressionAttributeNames={'#status': 'status'},
+        ExpressionAttributeValues={
+            ':status': status.value,
+            ':updated_at': updated_at
+        }
+    )
+    
+    # Return updated file record
+    file_record.status = status
+    file_record.updated_at = updated_at
+    return file_record
+
+def update_file_record(file_id: str, new_filename: str) -> Optional[FileDB]:
     """Update file record filename"""
     file_record = get_file_by_id(file_id)
     if not file_record:
@@ -79,8 +129,9 @@ def update_file_record(file_id: str, new_filename: str) -> dict:
         }
     )
     
-    file_record['filename'] = new_filename
-    file_record['updated_at'] = updated_at
+    # Return updated file record
+    file_record.filename = new_filename
+    file_record.updated_at = updated_at
     return file_record
 
 def delete_file_record(file_id: str) -> bool:
