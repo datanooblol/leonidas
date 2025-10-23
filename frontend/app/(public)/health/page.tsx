@@ -12,7 +12,7 @@ export default function HealthPage() {
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        console.log("API URL:", apiUrl);
+        // console.log("API URL:", apiUrl);
         const response = await fetch(`${apiUrl}/health`);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);

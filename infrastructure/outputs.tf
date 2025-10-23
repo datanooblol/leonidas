@@ -52,21 +52,21 @@ output "api_gateway_id" {
   value       = aws_api_gateway_rest_api.main.id
 }
 
-# Frontend outputs
-output "amplify_app_id" {
-  description = "Amplify App ID"
-  value       = aws_amplify_app.frontend.id
-}
-
-output "amplify_app_url" {
-  description = "Amplify App custom domain URL"
-  value       = "https://leonidas.${var.domain_name}"
-}
-
-output "amplify_app_url_www" {
-  description = "Amplify App custom domain URL (WWW)"
-  value       = "https://www.leonidas.${var.domain_name}"
-}
+# Frontend outputs - commented out since Amplify is manually managed
+# output "amplify_app_id" {
+#   description = "Amplify App ID"
+#   value       = aws_amplify_app.frontend.id
+# }
+# 
+# output "amplify_app_url" {
+#   description = "Amplify App custom domain URL"
+#   value       = "https://leonidas.${var.domain_name}"
+# }
+# 
+# output "amplify_app_url_www" {
+#   description = "Amplify App custom domain URL (WWW)"
+#   value       = "https://www.leonidas.${var.domain_name}"
+# }
 
 # DNS outputs
 output "certificate_arn" {
