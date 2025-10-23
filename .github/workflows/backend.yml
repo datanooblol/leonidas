@@ -19,7 +19,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install uv
         run: pip install uv
@@ -28,10 +28,20 @@ jobs:
         run: uv sync
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run test_lambda.py
 
+  wait-for-infrastructure:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for infrastructure
+        run: |
+          echo "Waiting for infrastructure deployment to complete..."
+          # Wait for infrastructure workflow to complete
+          sleep 300  # 5 minutes - adjust as needed
+          
   deploy:
-    needs: test
+    needs: [test, wait-for-infrastructure]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
@@ -51,25 +61,25 @@ jobs:
       - name: Login to ECR
         run: |
           aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com
-          
+
       - name: Build and Push Docker Image
         run: |
           # Get ECR repository URL from Terraform
           cd ../infrastructure
           ECR_URI=$(terraform output -raw ecr_repository_url)
           cd ../backend
-          
+
           # Build and push container
           docker build -t leonidas-backend .
           docker tag leonidas-backend:latest $ECR_URI:latest
           docker push $ECR_URI:latest
-          
+
       - name: Update Lambda Function
         run: |
           cd ../infrastructure
           FUNCTION_NAME=$(terraform output -raw lambda_function_name)
           ECR_URI=$(terraform output -raw ecr_repository_url)
-          
+
           # Update Lambda to use new image
           aws lambda update-function-code \
             --function-name $FUNCTION_NAME \

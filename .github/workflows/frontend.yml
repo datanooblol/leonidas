@@ -32,8 +32,17 @@ jobs:
     - name: Test
       run: npm test
       
+  wait-for-infrastructure:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for infrastructure
+        run: |
+          echo "Waiting for infrastructure deployment to complete..."
+          sleep 300  # 5 minutes - adjust as needed
+          
   deploy:
-    needs: build
+    needs: [build, wait-for-infrastructure]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
