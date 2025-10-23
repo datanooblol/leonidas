@@ -75,30 +75,11 @@ resource "aws_api_gateway_domain_name" "api" {
   }
 }
 
-# API Gateway custom domain (www version)
-resource "aws_api_gateway_domain_name" "api_www" {
-  domain_name     = "www.leonidas-api.${var.domain_name}"
-  certificate_arn = aws_acm_certificate_validation.main.certificate_arn
-
-  tags = {
-    Name        = "API Custom Domain (WWW)"
-    Environment = var.environment
-    Project     = var.project_name
-  }
-}
-
 # API Gateway base path mapping (non-www)
 resource "aws_api_gateway_base_path_mapping" "api" {
   api_id      = aws_api_gateway_rest_api.main.id
   stage_name  = aws_api_gateway_deployment.main.stage_name
   domain_name = aws_api_gateway_domain_name.api.domain_name
-}
-
-# API Gateway base path mapping (www)
-resource "aws_api_gateway_base_path_mapping" "api_www" {
-  api_id      = aws_api_gateway_rest_api.main.id
-  stage_name  = aws_api_gateway_deployment.main.stage_name
-  domain_name = aws_api_gateway_domain_name.api_www.domain_name
 }
 
 # Route53 record for API (non-www)
@@ -111,18 +92,5 @@ resource "aws_route53_record" "api" {
     evaluate_target_health = true
     name                   = aws_api_gateway_domain_name.api.cloudfront_domain_name
     zone_id               = aws_api_gateway_domain_name.api.cloudfront_zone_id
-  }
-}
-
-# Route53 record for API (www)
-resource "aws_route53_record" "api_www" {
-  name    = aws_api_gateway_domain_name.api_www.domain_name
-  type    = "A"
-  zone_id = data.aws_route53_zone.main.zone_id
-
-  alias {
-    evaluate_target_health = true
-    name                   = aws_api_gateway_domain_name.api_www.cloudfront_domain_name
-    zone_id               = aws_api_gateway_domain_name.api_www.cloudfront_zone_id
   }
 }

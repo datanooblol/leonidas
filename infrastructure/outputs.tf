@@ -47,11 +47,6 @@ output "api_gateway_url" {
   value       = "https://leonidas-api.${var.domain_name}"
 }
 
-output "api_gateway_url_www" {
-  description = "API Gateway custom domain URL (WWW)"
-  value       = "https://www.leonidas-api.${var.domain_name}"
-}
-
 output "api_gateway_id" {
   description = "API Gateway REST API ID"
   value       = aws_api_gateway_rest_api.main.id

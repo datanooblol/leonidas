@@ -22,8 +22,37 @@ jobs:
     - name: Terraform Init
       run: terraform init
       
-    - name: Terraform Plan
-      run: terraform plan
+    - name: Import Existing Resources
+      run: |
+        # Import existing resources (ignore errors if they don't exist)
+        echo "Importing existing AWS resources..."
+        
+        # Storage
+        terraform import -input=false aws_s3_bucket.uploads leonidas-dev-uploads || true
+        
+        # Database
+        terraform import -input=false aws_dynamodb_table.users leonidas_dev_users || true
+        terraform import -input=false aws_dynamodb_table.projects leonidas_dev_projects || true
+        terraform import -input=false aws_dynamodb_table.sessions leonidas_dev_sessions || true
+        terraform import -input=false aws_dynamodb_table.messages leonidas_dev_messages || true
+        terraform import -input=false aws_dynamodb_table.files leonidas_dev_files || true
+        
+        # Container & Lambda
+        terraform import -input=false aws_ecr_repository.backend leonidas-backend || true
+        terraform import -input=false aws_iam_role.lambda_role leonidas-lambda-role || true
+        terraform import -input=false aws_lambda_function.api leonidas-api || true
+        
+        # API Gateway
+        terraform import -input=false aws_api_gateway_rest_api.main $(aws apigateway get-rest-apis --query "items[?name=='leonidas-api'].id" --output text 2>/dev/null) || true
+        terraform import -input=false aws_api_gateway_domain_name.api leonidas-api.datanooblol.com || true
+        
+        # Frontend
+        terraform import -input=false aws_amplify_app.frontend $(aws amplify list-apps --query "apps[?name=='leonidas-frontend'].appId" --output text 2>/dev/null) || true
+        
+        # DNS
+        terraform import -input=false aws_acm_certificate.main $(aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='datanooblol.com'].CertificateArn" --output text 2>/dev/null) || true
+        
+        echo "Import completed!"
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -31,16 +60,8 @@ jobs:
         TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
         TF_VAR_github_repository: ${{ secrets.REPO_NAME }}
         
-    - name: Import Existing Resources
-      if: github.ref == 'refs/heads/main'
-      run: |
-        # Import existing resources (ignore errors if they don't exist)
-        terraform import -input=false aws_ecr_repository.backend leonidas-backend || true
-        terraform import -input=false aws_iam_role.lambda_role leonidas-lambda-role || true
-        terraform import -input=false aws_s3_bucket.uploads leonidas-dev-uploads || true
-        terraform import -input=false aws_api_gateway_domain_name.api leonidas-api.datanooblol.com || true
-        terraform import -input=false aws_api_gateway_domain_name.api_www www.leonidas-api.datanooblol.com || true
-        terraform import -input=false aws_amplify_app.frontend d1n9fnp6rrvivj || true
+    - name: Terraform Plan
+      run: terraform plan
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
