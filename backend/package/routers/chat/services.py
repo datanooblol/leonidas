@@ -5,7 +5,7 @@ from .interface import MessageSend, ChatResponse, ChatHistoryResponse, MessageHi
 from package.routers.sessions.database import get_session_by_id
 from package.routers.projects.database import get_project_by_id
 from package.core.config import settings
-from package.core.llm import BedrockOpenAI, UserMessage, ModelResponse
+from package.core.llm import BedrockOpenAI, UserMessage, ModelResponse, Role
 from .database import get_history, get_recent_history, create_user_message, create_assistant_message
 
 # Initialize DS Bro
@@ -64,10 +64,14 @@ def send_message_to_session(user_id: str, session_id: str, message_data: Message
     
     # Build conversation for AI
     conversation = []
-    for msg in recent_messages:
-        conversation.append(UserMessage(content=msg.content))
+    for msg in recent_messages[::-1]:
+        if msg.role == Role.USER:
+            conversation.append(UserMessage(content=msg.content))
+        else:
+            conversation.append(dict(role='assistant', content=msg.content))
     
     # Get AI response
+    # print(len(conversation))
     model_response = ds_bro.run(DS_BRO_PROMPT, conversation)
     
     # Create assistant message record
