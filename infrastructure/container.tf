@@ -118,8 +118,4 @@ resource "aws_lambda_function" "api" {
     Environment = var.environment
     Project     = var.project_name
   }
-
-  lifecycle {
-    ignore_changes = [image_uri]
-  }
 }
