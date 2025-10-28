@@ -72,6 +72,7 @@ def send_message_to_session(user_id: str, session_id: str, message_data: Message
     
     # Get AI response
     # print("Conversation len:", len(conversation))
+    conversation.append(UserMessage(content=message_data.content))
     model_response = ds_bro.run(DS_BRO_PROMPT, conversation)
     
     # Create assistant message record
