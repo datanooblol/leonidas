@@ -11,7 +11,7 @@ export default function HealthPage() {
     const checkHealth = async () => {
       try {
         const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          process.env.NEXT_PUBLIC_API_URL || "https://leonidas-api.datanooblol.com";
         // console.log("API URL:", apiUrl);
         const response = await fetch(`${apiUrl}/health`);
         if (!response.ok) {

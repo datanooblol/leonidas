@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends
-from .interface import MessageSend, ChatResponse, ChatHistoryResponse
-# from .services import send_message_to_session, get_messages_for_session, update_chat_message, delete_chat_message, clear_chat_history
-from .services import get_full_chat_history, send_message_to_session
+from .interface import MessageSend, ChatResponse, ChatHistoryResponse, SendMessageResponse
+from .services import get_full_chat_history, send_message_to_session, send_message_with_both_responses
 from package.core.auth_middleware import get_current_user
 from package.core.llm import ModelResponse
 
 router = APIRouter()
+
+@router.post("/sessions/{session_id}/messages", response_model=SendMessageResponse)
+def send_message(session_id: str, message_data: MessageSend, user_id: str = Depends(get_current_user)):
+    return send_message_with_both_responses(user_id, session_id, message_data)
 
 @router.post("/sessions/{session_id}/chat", response_model=ChatResponse)
 def chat(session_id: str, message_data: MessageSend, user_id:str=Depends(get_current_user)):
