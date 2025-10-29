@@ -97,7 +97,8 @@ def confirm_file_upload(file_id: str, user_id: str, size: int) -> FileResponse:
     # Create metadata after uploading complete
     catalog = DataCatalog(aws_configs=get_aws_configs())
     source = f"s3://{settings.FILE_BUCKET}/{file_record.s3_key}"
-    print(source)
+    # source = "s3://leonidas-dev-uploads-9586b382/fc7dd676-617b-4a5a-b9b9-31ad6ebc9d4a/5cdeff3a-e761-463d-88c8-ac910eb75bdf/files/ce2f195b-bfa3-49bf-be7b-e213fffcf74d_tips.csv"
+    print("SOURCE:", source)
     catalog.register(name="mock", source=source)
     file = catalog.query(f"DESCRIBE mock;")
     fm = FileMetadata.from_dataframe(name=file_record.name, description=file_record.description, df=file)

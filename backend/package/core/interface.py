@@ -16,8 +16,8 @@ class FieldDetail(BaseModel):
 
 class FileMetadata(BaseModel):
     file_id:Optional[str] = Field(default=None)
-    name:str
-    description:str = Field(default=None)
+    name:Optional[str] = Field(default=None)
+    description:Optional[str] = Field(default=None)
     columns:List[FieldDetail]
 
     @classmethod

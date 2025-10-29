@@ -4,8 +4,12 @@ from typing import List
 from package.core.llm import Role
 from typing import Optional, Any
 
+# class MessageSend(BaseModel):
+#     content: str
 class MessageSend(BaseModel):
     content: str
+    file_ids: Optional[List[str]] = Field(default=None, description="Optional list of file ids for data context")
+
 
 class ChatResponse(BaseModel):
     id:str
@@ -27,3 +31,8 @@ class MessageHistoryResponse(BaseModel):
 class ChatHistoryResponse(BaseModel):
     session_id: str
     messages: List[MessageHistoryResponse]
+
+class ChatDataRequest(BaseModel):
+    # session_id:str
+    file_ids:List[str] = Field(description="List of file ids to be used in the chat", default_factory=list)
+    content:str

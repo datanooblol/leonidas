@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
-from .interface import MessageSend, ChatResponse, ChatHistoryResponse
+from .interface import MessageSend, ChatResponse, ChatHistoryResponse, ChatDataRequest
 # from .services import send_message_to_session, get_messages_for_session, update_chat_message, delete_chat_message, clear_chat_history
-from .services import get_full_chat_history, send_message_to_session
+from .services import get_full_chat_history, send_message_to_session, send_message_with_data, test_send_message_to_session
 from package.core.auth_middleware import get_current_user
 from package.core.llm import ModelResponse
 
@@ -24,3 +24,14 @@ def chat(session_id: str, message_data: MessageSend, user_id:str=Depends(get_cur
 def chat_history(session_id:str, user_id:str=Depends(get_current_user)):
     messages = get_full_chat_history(user_id, session_id)
     return messages
+
+@router.post("/sessions/{session_id}/chat/data")
+def chat_data(session_id:str, message_data:ChatDataRequest, user_id:str=Depends(get_current_user)):
+    return send_message_with_data(user_id, session_id, message_data) 
+
+@router.post("/sessions/{session_id}/test-chat", response_model=ChatResponse)
+def chat(session_id: str, message_data: MessageSend, user_id: str = Depends(get_current_user)):
+    # Extract file_ids from message_data, default to None if not provided
+    file_ids = message_data.file_ids if hasattr(message_data, 'file_ids') else None
+    response = test_send_message_to_session(user_id, session_id, message_data, file_ids)
+    return response

@@ -166,15 +166,16 @@ def update_file_metadata(file_id: str, name: str, description: str, columns: Lis
         return None
     
     updated_at = datetime.now(timezone.utc).isoformat()
+    columns_dict = [column.model_dump() for column in columns]
     
     files_table.update_item(
         Key={'file_id': file_id},
-        UpdateExpression='SET #name = :name, description = :description, columns = :columns, updated_at = :updated_at',
-        ExpressionAttributeNames={'#name': 'name'},
+        UpdateExpression='SET #name = :name, description = :description, #columns = :columns, updated_at = :updated_at',
+        ExpressionAttributeNames={'#name': 'name', '#columns': 'columns'},
         ExpressionAttributeValues={
             ':name': name,
             ':description': description,
-            ':columns': columns,
+            ':columns': columns_dict,
             ':updated_at': updated_at
         }
     )
@@ -185,3 +186,32 @@ def update_file_metadata(file_id: str, name: str, description: str, columns: Lis
     file_record.columns = columns
     file_record.updated_at = updated_at
     return file_record
+
+def get_metadata_by_file_ids(file_ids: List[str]) -> List[FileDB]:
+    """Get multiple files by IDs using batch operation"""
+    if not file_ids:
+        return []
+    
+    # DynamoDB batch_get_item has a limit of 100 items
+    batch_size = 100
+    all_files = []
+    
+    for i in range(0, len(file_ids), batch_size):
+        batch_ids = file_ids[i:i + batch_size]
+        
+        response = dynamodb.batch_get_item(
+            RequestItems={
+                settings.FILES_TABLE: {
+                    'Keys': [{'file_id': file_id} for file_id in batch_ids]
+                }
+            }
+        )
+        
+        items = response.get('Responses', {}).get(settings.FILES_TABLE, [])
+        for item in items:
+            # Convert columns dictionaries back to FieldDetail objects
+            if 'columns' in item and item['columns']:
+                item['columns'] = [FieldDetail(**col) for col in item['columns']]
+            all_files.append(FileDB(**item))
+    
+    return all_files

@@ -12,3 +12,7 @@ class PromptHub:
     @property
     def guide_question(self):
         return _run(filename="guide_question.md")
+
+    @property
+    def chat_with_data(self):
+        return _run(filename="chat_with_data.md")
