@@ -9,6 +9,7 @@ interface ColumnMetadata {
   unique_values?: number
   sample_values?: any[]
   description?: string
+  input_type?: string
 }
 
 interface FileMetadata {
@@ -40,15 +41,6 @@ export default function MetadataModal({ metadata, onClose, onSave }: MetadataMod
     const updatedMetadata = { ...metadata, columns: editingColumns }
     onSave?.(updatedMetadata)
     setIsEditing(false)
-  }
-
-  const dtypeOptions = ['int64', 'float64', 'object', 'bool', 'datetime64']
-  const inputTypeMap: Record<string, string> = {
-    'int64': 'number',
-    'float64': 'number', 
-    'object': 'text',
-    'bool': 'checkbox',
-    'datetime64': 'datetime-local'
   }
 
   return (
@@ -128,38 +120,33 @@ export default function MetadataModal({ metadata, onClose, onSave }: MetadataMod
                   {editingColumns.map((col, idx) => (
                     <tr key={idx} className="border-t border-gray-200 dark:border-gray-600">
                       <td className="px-4 py-3 border-r border-gray-200 dark:border-gray-600">
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={col.name}
-                            onChange={(e) => updateColumn(idx, 'name', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm dark:bg-gray-600 dark:border-gray-500"
-                          />
-                        ) : (
-                          <span className="font-medium">{col.name}</span>
-                        )}
+                        <span className="font-medium">{col.name}</span>
+                      </td>
+                      <td className="px-4 py-3 border-r border-gray-200 dark:border-gray-600">
+                        <span className="font-mono text-sm bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
+                          {col.dtype}
+                        </span>
                       </td>
                       <td className="px-4 py-3 border-r border-gray-200 dark:border-gray-600">
                         {isEditing ? (
                           <select
-                            value={col.dtype}
-                            onChange={(e) => updateColumn(idx, 'dtype', e.target.value)}
+                            value={col.input_type || 'input'}
+                            onChange={(e) => updateColumn(idx, 'input_type', e.target.value)}
                             className="w-full px-2 py-1 border rounded text-sm dark:bg-gray-600 dark:border-gray-500"
                           >
-                            {dtypeOptions.map(dtype => (
-                              <option key={dtype} value={dtype}>{dtype}</option>
-                            ))}
+                            <option value="ID">ID</option>
+                            <option value="input">input</option>
+                            <option value="reject">reject</option>
                           </select>
                         ) : (
-                          <span className="font-mono text-sm bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
-                            {col.dtype}
+                          <span className={`text-sm px-2 py-1 rounded ${
+                            col.input_type === 'ID' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                            col.input_type === 'reject' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          }`}>
+                            {col.input_type || 'input'}
                           </span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 border-r border-gray-200 dark:border-gray-600">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {inputTypeMap[col.dtype] || 'text'}
-                        </span>
                       </td>
                       <td className="px-4 py-3">
                         {isEditing ? (
@@ -182,37 +169,6 @@ export default function MetadataModal({ metadata, onClose, onSave }: MetadataMod
               </table>
             </div>
           </div>
-
-          {/* Preview */}
-          {metadata.preview && (
-            <div>
-              <h4 className="font-medium mb-3 text-gray-900 dark:text-white">ตัวอย่างข้อมูล</h4>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm border border-gray-200 dark:border-gray-600">
-                  <thead>
-                    <tr className="bg-gray-100 dark:bg-gray-700">
-                      {editingColumns.map((col) => (
-                        <th key={col.name} className="px-3 py-2 text-left font-medium border-r border-gray-200 dark:border-gray-600">
-                          {col.name}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metadata.preview.slice(0, 5).map((row, idx) => (
-                      <tr key={idx} className="border-t border-gray-200 dark:border-gray-600">
-                        {editingColumns.map((col) => (
-                          <td key={col.name} className="px-3 py-2 border-r border-gray-200 dark:border-gray-600">
-                            {row[col.name]?.toString() || '-'}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

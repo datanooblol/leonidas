@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { apiService } from '../lib/api'
+import MarkdownRenderer from './MarkdownRenderer'
 
 export default function TestPage() {
   const [email, setEmail] = useState('user@example.com')
@@ -13,6 +14,7 @@ export default function TestPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showMarkdown, setShowMarkdown] = useState<{[key: number]: boolean}>({})
 
   const handleLogin = async () => {
     setIsLoading(true)
@@ -181,7 +183,22 @@ export default function TestPage() {
                     <strong className="text-white">You:</strong> <span className="text-white">{chat.user}</span>
                   </div>
                   <div className="bg-gray-600 p-3 rounded">
-                    <strong className="text-white">AI:</strong> <span className="text-white">{chat.ai}</span>
+                    <div className="flex justify-between items-center mb-2">
+                      <strong className="text-white">AI:</strong>
+                      <button
+                        onClick={() => setShowMarkdown(prev => ({...prev, [index]: !prev[index]}))}
+                        className="text-xs bg-blue-500 text-white px-2 py-1 rounded"
+                      >
+                        {showMarkdown[index] ? 'Show Plain' : 'Show Markdown'}
+                      </button>
+                    </div>
+                    {showMarkdown[index] ? (
+                      <div className="text-white">
+                        <MarkdownRenderer content={chat.ai} />
+                      </div>
+                    ) : (
+                      <div className="text-white whitespace-pre-wrap">{chat.ai}</div>
+                    )}
                   </div>
                 </div>
               ))}

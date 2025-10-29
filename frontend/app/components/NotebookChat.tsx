@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { apiService } from '../lib/api'
 import MetadataModal from './MetadataModal'
+import MarkdownRenderer from './MarkdownRenderer'
 
 interface Message {
   id: string
@@ -27,6 +28,7 @@ interface ColumnMetadata {
   unique_values?: number
   sample_values?: any[]
   description?: string
+  input_type?: string
 }
 
 interface FileMetadata {
@@ -53,6 +55,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [fileMetadata, setFileMetadata] = useState<Record<string, FileMetadata>>({})
   const [showMetadata, setShowMetadata] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -102,7 +105,8 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
           nullable: false, 
           unique_values: 1000, 
           sample_values: [1, 2, 3],
-          description: "รหัสประจำตัวผู้ใช้"
+          description: "รหัสประจำตัวผู้ใช้",
+          input_type: "ID"
         },
         { 
           name: "name", 
@@ -110,7 +114,8 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
           nullable: true, 
           unique_values: 800, 
           sample_values: ["John", "Jane", "Bob"],
-          description: "ชื่อผู้ใช้"
+          description: "ชื่อผู้ใช้",
+          input_type: "input"
         },
         { 
           name: "age", 
@@ -118,7 +123,8 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
           nullable: true, 
           unique_values: 50, 
           sample_values: [25, 30, 35],
-          description: "อายุ (ปี)"
+          description: "อายุ (ปี)",
+          input_type: "input"
         },
         { 
           name: "salary", 
@@ -126,23 +132,25 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
           nullable: true, 
           unique_values: 900, 
           sample_values: [50000.0, 60000.0, 75000.0],
-          description: "เงินเดือน (บาท)"
+          description: "เงินเดือน (บาท)",
+          input_type: "input"
         },
         { 
-          name: "is_active", 
-          dtype: "bool", 
-          nullable: false, 
+          name: "temp_field", 
+          dtype: "object", 
+          nullable: true, 
           unique_values: 2, 
-          sample_values: [true, false],
-          description: "สถานะการใช้งาน"
+          sample_values: ["temp1", "temp2"],
+          description: "ฟิลด์ชั่วคราว",
+          input_type: "reject"
         }
       ],
       preview: [
-        { id: 1, name: "John", age: 25, salary: 50000.0, is_active: true },
-        { id: 2, name: "Jane", age: 30, salary: 60000.0, is_active: true },
-        { id: 3, name: "Bob", age: 35, salary: 75000.0, is_active: false },
-        { id: 4, name: "Alice", age: 28, salary: 55000.0, is_active: true },
-        { id: 5, name: "Charlie", age: 32, salary: 70000.0, is_active: true }
+        { id: 1, name: "John", age: 25, salary: 50000.0, temp_field: "temp1" },
+        { id: 2, name: "Jane", age: 30, salary: 60000.0, temp_field: "temp2" },
+        { id: 3, name: "Bob", age: 35, salary: 75000.0, temp_field: "temp1" },
+        { id: 4, name: "Alice", age: 28, salary: 55000.0, temp_field: "temp2" },
+        { id: 5, name: "Charlie", age: 32, salary: 70000.0, temp_field: "temp1" }
       ]
     }
     
@@ -307,6 +315,16 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                     >
                       📊 ดูข้อมูล
                     </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        loadFileMetadata(file.file_id)
+                        setShowPreview(file.file_id)
+                      }}
+                      className="text-xs text-purple-600 hover:text-purple-800 px-2 py-1 bg-purple-50 dark:bg-purple-900 rounded"
+                    >
+                      👁️ ดูตัวอย่าง
+                    </button>
                   </div>
                 </div>
               ))}
@@ -366,7 +384,11 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                       : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.role === 'assistant' ? (
+                    <MarkdownRenderer content={message.content} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  )}
                   <p className={`text-xs mt-2 ${
                     message.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
                   }`}>
@@ -430,6 +452,50 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
           onClose={() => setShowMetadata(null)}
           onSave={handleMetadataSave}
         />
+      )}
+
+      {/* Preview Modal */}
+      {showPreview && fileMetadata[showPreview] && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-5xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                ตัวอย่างข้อมูล: {fileMetadata[showPreview].filename}
+              </h3>
+              <button 
+                onClick={() => setShowPreview(null)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm border border-gray-200 dark:border-gray-600">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-gray-700">
+                    {fileMetadata[showPreview].columns?.map((col) => (
+                      <th key={col.name} className="px-3 py-2 text-left font-medium border-r border-gray-200 dark:border-gray-600">
+                        {col.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {fileMetadata[showPreview].preview?.slice(0, 10).map((row, idx) => (
+                    <tr key={idx} className="border-t border-gray-200 dark:border-gray-600">
+                      {fileMetadata[showPreview].columns?.map((col) => (
+                        <td key={col.name} className="px-3 py-2 border-r border-gray-200 dark:border-gray-600">
+                          {row[col.name]?.toString() || '-'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

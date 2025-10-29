@@ -7,6 +7,7 @@ import HomePage from './components/HomePage'
 import ProjectDashboard from './components/ProjectDashboard'
 import TestPage from './components/TestPage'
 import { apiService } from './lib/api'
+import MarkdownRenderer from './components/MarkdownRenderer'
 
 type AppState = 'login' | 'register' | 'home' | 'project' | 'test'
 
@@ -59,7 +60,16 @@ export default function App() {
   }
 
   if (appState === 'test') {
-    return <TestPage />
+    const markdownContent = "# AI Response\n\nThis is **markdown** content with:\n\n- Lists\n- **Bold text**\n- `Code blocks`\n\n```javascript\nconsole.log('Hello World');\n```";
+    return (
+      <div className="p-8">
+        <TestPage />
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Markdown Example:</h2>
+          <MarkdownRenderer content={markdownContent} />
+        </div>
+      </div>
+    )
   }
 
   if (appState === 'login') {

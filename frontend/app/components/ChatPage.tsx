@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { apiService } from '../lib/api'
+import MarkdownRenderer from './MarkdownRenderer'
 
 interface Message {
   id: string
@@ -161,7 +162,11 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
                       : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.role === 'assistant' ? (
+                    <MarkdownRenderer content={message.content} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  )}
                   <p className={`text-xs mt-1 ${
                     message.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
                   }`}>
