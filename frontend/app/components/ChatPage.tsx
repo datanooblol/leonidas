@@ -39,7 +39,7 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
         setSessionName(sessionData.name)
         
         // Format messages for display
-        const formattedMessages: Message[] = sessionData.messages.map(msg => ({
+        const formattedMessages: Message[] = (sessionData.messages || []).map(msg => ({
           id: msg.message_id,
           content: msg.content,
           role: msg.role,
@@ -51,7 +51,7 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
         // Fallback to chat history endpoint if session endpoint fails
         try {
           const history = await apiService.getChatHistory(sessionId)
-          const formattedMessages: Message[] = history.messages.map(msg => ({
+          const formattedMessages: Message[] = (history.messages || []).map(msg => ({
             id: msg.message_id,
             content: msg.content,
             role: msg.role,

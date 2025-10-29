@@ -5,9 +5,10 @@ import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 import HomePage from './components/HomePage'
 import ProjectDashboard from './components/ProjectDashboard'
+import TestPage from './components/TestPage'
 import { apiService } from './lib/api'
 
-type AppState = 'login' | 'register' | 'home' | 'project'
+type AppState = 'login' | 'register' | 'home' | 'project' | 'test'
 
 interface ProjectData {
   project_id: string
@@ -55,6 +56,10 @@ export default function App() {
 
   const handleSwitchToLogin = () => {
     setAppState('login')
+  }
+
+  if (appState === 'test') {
+    return <TestPage />
   }
 
   if (appState === 'login') {
