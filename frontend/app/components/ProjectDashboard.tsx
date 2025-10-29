@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { apiService } from '../lib/api'
 import SessionManager from './SessionManager'
 import FileManager from './FileManager'
-import ChatPage from './ChatPage'
+import NotebookChat from './NotebookChat'
 
 interface ProjectData {
   project_id: string
@@ -92,7 +92,7 @@ export default function ProjectDashboard({ project, onBack }: ProjectDashboardPr
 
   if (activeTab === 'chat' && currentSessionId) {
     return (
-      <ChatPage
+      <NotebookChat
         projectId={project.project_id}
         sessionId={currentSessionId}
         onBack={() => setActiveTab('overview')}
