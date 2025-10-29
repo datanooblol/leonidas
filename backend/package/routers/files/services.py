@@ -2,10 +2,13 @@ import boto3
 from fastapi import HTTPException
 from datetime import datetime
 from uuid import uuid4
-from .database import create_file_record, get_project_files, get_file_by_id, delete_file_record, confirm_file_upload_record, update_file_record
+from .database import create_file_record, get_project_files, get_file_by_id, delete_file_record, confirm_file_upload_record, update_file_record, update_file_metadata
 from .interface import PresignedUrlResponse, FileResponse, FileListResponse
 from package.routers.projects.database import get_project_by_id
 from package.core.config import settings
+from package.core.data_catalog import DataCatalog
+from package.core.aws_config import get_aws_configs
+from package.core.interface import FileMetadata
 
 s3_client = boto3.client('s3', region_name=settings.AWS_REGION)
 
@@ -91,8 +94,16 @@ def confirm_file_upload(file_id: str, user_id: str, size: int) -> FileResponse:
     if not project:
         raise HTTPException(status_code=404, detail="File not found")
     
+    # Create metadata after uploading complete
+    catalog = DataCatalog(aws_configs=get_aws_configs())
+    source = f"s3://{settings.FILE_BUCKET}/{file_record.s3_key}"
+    print(source)
+    catalog.register(name="mock", source=source)
+    file = catalog.query(f"DESCRIBE mock;")
+    fm = FileMetadata.from_dataframe(name=file_record.name, description=file_record.description, df=file)
     # Update file record with actual size
     updated_record = confirm_file_upload_record(file_id, size)
+    updated_record = update_file_metadata(file_id, fm.name, fm.description, fm.columns)
     
     return FileResponse(
         file_id=updated_record.file_id,
@@ -187,3 +198,37 @@ def delete_user_file(file_id: str, user_id: str) -> dict:
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File deletion failed: {str(e)}")
+
+def update_file_metadata_service(file_id: str, user_id: str, metadata: FileMetadata) -> FileResponse:
+    """Update file metadata"""
+    # Verify file ownership
+    file_record = get_file_by_id(file_id)
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Verify project ownership (assuming you have this validation)
+    # validate_project_ownership(file_record.project_id, user_id)
+    
+    # Update metadata
+    updated_file = update_file_metadata(file_id, metadata.name, metadata.description, metadata.columns)
+    if not updated_file:
+        raise HTTPException(status_code=500, detail="Failed to update metadata")
+    
+    return FileResponse(**updated_file.model_dump())
+
+def get_file_metadata_service(file_id: str, user_id: str) -> FileMetadata:
+    """Get file metadata"""
+    file_record = get_file_by_id(file_id)
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Verify project ownership if needed
+    # validate_project_ownership(file_record.project_id, user_id)
+    
+    return FileMetadata(
+        file_id=file_record.file_id,
+        name=file_record.name,
+        description=file_record.description,
+        columns=file_record.columns
+    )
+

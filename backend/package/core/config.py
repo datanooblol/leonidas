@@ -23,7 +23,7 @@ class Settings:
     
     # S3 Configuration
     S3_BUCKET: str = os.getenv("S3_BUCKET", "leonidas-dev-bucket")
-    FILE_BUCKET: str = os.getenv("FILE_BUCKET", "leonidas-dev-uploads")
+    FILE_BUCKET: str = os.getenv("FILE_BUCKET", "leonidas-dev-uploads-9586b382")
     
     # Bedrock Configuration
     BEDROCK_MODEL_ID: str = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0")
