@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from uuid import uuid4
 from enum import Enum
 import time
+import requests
 
 def bedrock_driver(messages):
     return [dict(role=m['role'], content=[dict(text=m['content'])]) for m in messages]
@@ -76,3 +77,30 @@ class BedrockOpenAI(BaseBedrock):
             output_tokens=usage['outputTokens'],
             response_time_ms=response_time_ms
         )
+    
+class LocalOpenAI(BaseLLM):
+    def __init__(self, model_id="gpt-oss:20b"):
+        super().__init__(model_id=model_id)
+        self.endpoint_url: str = "http://localhost:11434/api/chat"
+
+    def OutputMessage(self, response, response_time_ms)->ModelResponse:
+        return ModelResponse(
+            model_name=response['model'],
+            role=response['message']['role'],
+            content=response['message']['content'],
+            reason=response['message']['thinking'],
+            input_tokens=0,
+            output_tokens=0,
+            response_time_ms=response_time_ms
+        )
+
+    def run(self, system_prompt:str, messages:list)->ModelResponse:
+        start_time = time.time()
+        payload = {
+            "model": self.model_id,
+            "messages": [dict(role="system", content=system_prompt)]+messages,
+            "stream": False
+        }
+        response = requests.post(self.endpoint_url, json=payload)
+        response_time_ms = int((time.time() - start_time) * 1000)
+        return self.OutputMessage(response.json(), response_time_ms=response_time_ms)

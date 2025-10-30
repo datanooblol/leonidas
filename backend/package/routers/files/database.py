@@ -5,6 +5,7 @@ from typing import List, Optional
 from package.core.config import settings
 from pydantic import BaseModel, Field
 from enum import Enum
+from package.core.interface import FieldDetail
 
 dynamodb = boto3.resource('dynamodb', region_name=settings.AWS_REGION)
 files_table = dynamodb.Table(settings.FILES_TABLE)
@@ -27,8 +28,13 @@ class FileDB(BaseModel):
     size: int
     status: FileStatus = Field(default=FileStatus.UPLOADING)
     source: FileSource = Field(default=FileSource.USER_UPLOAD)
+    name: str = Field(default="")
+    description: str = Field(default="")
+    selected: bool = Field(default=False)
+    columns: List[FieldDetail] = Field(default_factory=list)
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 
 def create_file_record(project_id: str, filename: str, s3_key: str, size: int, file_id: str = None, status: FileStatus = FileStatus.UPLOADING, source: FileSource = FileSource.USER_UPLOAD) -> FileDB:
     """Create file record in DynamoDB"""
@@ -142,3 +148,95 @@ def delete_file_record(file_id: str) -> bool:
     
     files_table.delete_item(Key={'file_id': file_id})
     return True
+
+def update_file_metadata(file_id: str, name: str, description: str, columns: List[FieldDetail]) -> Optional[FileDB]:
+    """Update file metadata"""
+    file_record = get_file_by_id(file_id)
+    if not file_record:
+        return None
+    
+    updated_at = datetime.now(timezone.utc).isoformat()
+    columns_dict = [column.model_dump() for column in columns]
+    
+    files_table.update_item(
+        Key={'file_id': file_id},
+        UpdateExpression='SET #name = :name, description = :description, #columns = :columns, updated_at = :updated_at',
+        ExpressionAttributeNames={'#name': 'name', '#columns': 'columns'},
+        ExpressionAttributeValues={
+            ':name': name,
+            ':description': description,
+            ':columns': columns_dict,
+            ':updated_at': updated_at
+        }
+    )
+    
+    # Return updated file record
+    file_record.name = name
+    file_record.description = description
+    file_record.columns = columns
+    file_record.updated_at = updated_at
+    return file_record
+
+def get_metadata_by_file_ids(file_ids: List[str]) -> List[FileDB]:
+    """Get multiple files by IDs using batch operation"""
+    if not file_ids:
+        return []
+    
+    # DynamoDB batch_get_item has a limit of 100 items
+    batch_size = 100
+    all_files = []
+    
+    for i in range(0, len(file_ids), batch_size):
+        batch_ids = file_ids[i:i + batch_size]
+        
+        response = dynamodb.batch_get_item(
+            RequestItems={
+                settings.FILES_TABLE: {
+                    'Keys': [{'file_id': file_id} for file_id in batch_ids]
+                }
+            }
+        )
+        
+        items = response.get('Responses', {}).get(settings.FILES_TABLE, [])
+        for item in items:
+            # Convert columns dictionaries back to FieldDetail objects
+            if 'columns' in item and item['columns']:
+                item['columns'] = [FieldDetail(**col) for col in item['columns']]
+            all_files.append(FileDB(**item))
+    
+    return all_files
+
+def update_file_selection_db(file_id: str, selected: bool) -> Optional[FileDB]:
+    """Update file selection status"""
+    file_record = get_file_by_id(file_id)
+    if not file_record:
+        return None
+    
+    updated_at = datetime.now(timezone.utc).isoformat()
+    
+    files_table.update_item(
+        Key={'file_id': file_id},
+        UpdateExpression='SET selected = :selected, updated_at = :updated_at',
+        ExpressionAttributeValues={
+            ':selected': selected,
+            ':updated_at': updated_at
+        }
+    )
+    
+    # Return updated file record
+    file_record.selected = selected
+    file_record.updated_at = updated_at
+    return file_record
+
+def get_selected_files_for_project(project_id: str) -> List[FileDB]:
+    """Get all selected files for a project"""
+    response = files_table.query(
+        IndexName='ProjectIndex',
+        KeyConditionExpression='project_id = :project_id',
+        FilterExpression='selected = :selected',
+        ExpressionAttributeValues={
+            ':project_id': project_id,
+            ':selected': True
+        }
+    )
+    return [FileDB(**item) for item in response.get('Items', [])]
