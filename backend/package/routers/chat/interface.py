@@ -8,8 +8,13 @@ from typing import Optional, Any
 #     content: str
 class MessageSend(BaseModel):
     content: str
-    file_ids: Optional[List[str]] = Field(default=None, description="Optional list of file ids for data context")
+    chat_with_data: Optional[bool] = Field(default=False, description="Whether to chat with data context")
+    # file_ids: Optional[List[str]] = Field(default=None, description="Optional list of file ids for data context")
 
+class Artifact(BaseModel):
+    type: str
+    content: Any
+    title: Optional[str] = None
 
 class ChatResponse(BaseModel):
     id:str
@@ -19,7 +24,7 @@ class ChatResponse(BaseModel):
     input_tokens:int
     output_tokens:int
     reason:Optional[str] = Field(description="A reason why LLM answers this way", default=None)
-    artifacts:Optional[List[Any]] = Field(description="Artifacts can be html, figure, image or else", default=None)
+    artifacts:Optional[List[Artifact]] = Field(description="Artifacts can be html, figure, image or else", default=None)
 
 # interface.py
 class MessageHistoryResponse(BaseModel):

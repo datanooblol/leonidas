@@ -20,17 +20,6 @@ class FileSource(str, Enum):
     USER_UPLOAD = "user_upload"
     APP_GENERATED = "app_generated"
 
-# class FileDB(BaseModel):
-#     file_id: str = Field(default_factory=lambda: str(uuid4()))
-#     project_id: str
-#     filename: str
-#     s3_key: str
-#     size: int
-#     status: FileStatus = Field(default=FileStatus.UPLOADING)
-#     source: FileSource = Field(default=FileSource.USER_UPLOAD)
-#     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-#     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
 class FileDB(BaseModel):
     file_id: str = Field(default_factory=lambda: str(uuid4()))
     project_id: str
@@ -41,6 +30,7 @@ class FileDB(BaseModel):
     source: FileSource = Field(default=FileSource.USER_UPLOAD)
     name: str = Field(default="")
     description: str = Field(default="")
+    selected: bool = Field(default=False)
     columns: List[FieldDetail] = Field(default_factory=list)
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -215,3 +205,38 @@ def get_metadata_by_file_ids(file_ids: List[str]) -> List[FileDB]:
             all_files.append(FileDB(**item))
     
     return all_files
+
+def update_file_selection_db(file_id: str, selected: bool) -> Optional[FileDB]:
+    """Update file selection status"""
+    file_record = get_file_by_id(file_id)
+    if not file_record:
+        return None
+    
+    updated_at = datetime.now(timezone.utc).isoformat()
+    
+    files_table.update_item(
+        Key={'file_id': file_id},
+        UpdateExpression='SET selected = :selected, updated_at = :updated_at',
+        ExpressionAttributeValues={
+            ':selected': selected,
+            ':updated_at': updated_at
+        }
+    )
+    
+    # Return updated file record
+    file_record.selected = selected
+    file_record.updated_at = updated_at
+    return file_record
+
+def get_selected_files_for_project(project_id: str) -> List[FileDB]:
+    """Get all selected files for a project"""
+    response = files_table.query(
+        IndexName='ProjectIndex',
+        KeyConditionExpression='project_id = :project_id',
+        FilterExpression='selected = :selected',
+        ExpressionAttributeValues={
+            ':project_id': project_id,
+            ':selected': True
+        }
+    )
+    return [FileDB(**item) for item in response.get('Items', [])]

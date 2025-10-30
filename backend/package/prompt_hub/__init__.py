@@ -16,3 +16,7 @@ class PromptHub:
     @property
     def chat_with_data(self):
         return _run(filename="chat_with_data.md")
+
+    @property
+    def chat_with_bro(self):
+        return _run(filename="chat_with_bro.md")

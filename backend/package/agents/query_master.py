@@ -8,8 +8,8 @@ class QueryMasterAgent:
     1. Generate SQL queries
     2. Get results from database
     """
-    def __init__(self):
-        self.llm = BedrockOpenAI()
+    def __init__(self, llm):
+        self.llm = llm
 
     def run(self, messages:list) -> str:
         """Generate SQL query based on table metadata and user question."""

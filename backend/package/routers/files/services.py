@@ -2,7 +2,7 @@ import boto3
 from fastapi import HTTPException
 from datetime import datetime
 from uuid import uuid4
-from .database import create_file_record, get_project_files, get_file_by_id, delete_file_record, confirm_file_upload_record, update_file_record, update_file_metadata
+from .database import create_file_record, get_project_files, get_file_by_id, delete_file_record, confirm_file_upload_record, update_file_record, update_file_metadata, update_file_selection_db
 from .interface import PresignedUrlResponse, FileResponse, FileListResponse
 from package.routers.projects.database import get_project_by_id
 from package.core.config import settings
@@ -232,4 +232,33 @@ def get_file_metadata_service(file_id: str, user_id: str) -> FileMetadata:
         description=file_record.description,
         columns=file_record.columns
     )
+
+def update_file_selection_service(file_id: str, user_id: str, selected: bool) -> FileResponse:
+    """Update file selection status"""
+    # Get file record
+    file_record = get_file_by_id(file_id)
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Verify project ownership
+    project = get_project_by_id(file_record.project_id, user_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Update selection status
+    updated_record = update_file_selection_db(file_id, selected)
+    if not updated_record:
+        raise HTTPException(status_code=500, detail="Failed to update selection")
+    
+    return FileResponse(
+        file_id=updated_record.file_id,
+        project_id=updated_record.project_id,
+        filename=updated_record.filename,
+        size=updated_record.size,
+        status=updated_record.status,
+        source=updated_record.source,
+        created_at=datetime.fromisoformat(updated_record.created_at),
+        updated_at=datetime.fromisoformat(updated_record.updated_at)
+    )
+
 
