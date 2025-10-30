@@ -32,10 +32,10 @@ export default function LoginForm({ onLogin, onSwitchToRegister }: LoginFormProp
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            เข้าสู่ระบบ
+            Login
           </h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            AI Chat Assistant
+            Leonidas Project
           </p>
         </div>
         

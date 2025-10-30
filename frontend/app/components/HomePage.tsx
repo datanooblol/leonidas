@@ -57,7 +57,7 @@ export default function HomePage({ userEmail, onSelectProject, onLogout }: HomeP
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">กำลังโหลดโปรเจค...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     )
@@ -68,8 +68,8 @@ export default function HomePage({ userEmail, onSelectProject, onLogout }: HomeP
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Chat Assistant</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">สวัสดี {userEmail}</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcom to Leonidas</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Hello {userEmail}</p>
           </div>
           <button onClick={onLogout} className="px-4 py-2 text-red-600 border border-red-300 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20">
             Logout
@@ -79,9 +79,9 @@ export default function HomePage({ userEmail, onSelectProject, onLogout }: HomeP
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">โปรเจคของคุณ</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">My Projects</h2>
           <button onClick={() => setShowCreateForm(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            + สร้างโปรเจคใหม่
+            + New Project 
           </button>
         </div>
 
