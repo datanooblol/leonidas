@@ -5,7 +5,7 @@ interface FileData {
   file_id: string
   project_id: string
   filename: string
-  file_size: number
+  size: number
   file_type: string
   created_at: string
 }
@@ -127,7 +127,7 @@ export default function FileManager({ projectId, files, onFilesUpdate }: FileMan
                   {file.filename}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatFileSize(file.file_size)} • {new Date(file.created_at).toLocaleDateString('th-TH')}
+                  {file.size ? formatFileSize(file.size) : 'Unknown size'} • {new Date(file.created_at).toLocaleDateString('th-TH')}
                 </p>
               </div>
               <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center space-x-2">

@@ -16,7 +16,7 @@ interface FileData {
   file_id: string
   project_id: string
   filename: string
-  file_size: number
+  size: number
   file_type: string
   created_at: string
 }
@@ -290,7 +290,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                         {file.filename}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {formatFileSize(file.file_size)}
+                        {file.size ? formatFileSize(file.size) : 'Unknown size'}
                       </p>
                     </div>
                     <div className="ml-2">

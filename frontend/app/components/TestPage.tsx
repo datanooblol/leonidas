@@ -15,6 +15,7 @@ export default function TestPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [showMarkdown, setShowMarkdown] = useState<{[key: number]: boolean}>({})
+  const [fileData, setFileData] = useState<any[]>([])
 
   const handleLogin = async () => {
     setIsLoading(true)
@@ -80,6 +81,22 @@ export default function TestPage() {
       }])
     } catch (error) {
       setError('Send message failed: ' + (error as Error).message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadFileData = async () => {
+    if (!projectId) return
+    
+    setIsLoading(true)
+    setError('')
+    try {
+      const files = await apiService.getFiles(projectId)
+      console.log('📁 File Data:', files)
+      setFileData(files)
+    } catch (error) {
+      setError('Load files failed: ' + (error as Error).message)
     } finally {
       setIsLoading(false)
     }
@@ -157,6 +174,13 @@ export default function TestPage() {
                   Load History
                 </button>
                 <button
+                  onClick={loadFileData}
+                  disabled={!projectId}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded disabled:opacity-50"
+                >
+                  Load Files
+                </button>
+                <button
                   onClick={() => setIsLoggedIn(false)}
                   className="px-4 py-2 bg-red-500 text-white rounded"
                 >
@@ -170,6 +194,17 @@ export default function TestPage() {
         {error && (
           <div className="bg-red-900 border border-red-600 text-red-300 px-4 py-3 rounded mb-6">
             {error}
+          </div>
+        )}
+
+        {fileData.length > 0 && (
+          <div className="bg-gray-800 p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-white">File Data</h2>
+            <div className="bg-gray-900 p-4 rounded overflow-x-auto">
+              <pre className="text-green-400 text-sm whitespace-pre-wrap">
+                {JSON.stringify(fileData, null, 2)}
+              </pre>
+            </div>
           </div>
         )}
 
