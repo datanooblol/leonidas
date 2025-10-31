@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from .interface import SessionCreate, SessionUpdate, SessionResponse, SessionListResponse
-from .services import create_project_session, get_sessions_for_project, get_session_details, update_user_session, delete_user_session, refresh_user_session
+from .interface import SessionUpdate, SessionResponse
+from .services import get_session_details, update_user_session, delete_user_session, refresh_user_session
 from package.core.auth_middleware import get_current_user
 
 router = APIRouter()

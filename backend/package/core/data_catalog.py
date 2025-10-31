@@ -65,14 +65,14 @@ class DataCatalog:
             # File path (local or S3)
             if source.startswith('s3://'):
                 if source.endswith('.parquet'):
-                    self._conn.execute(f"CREATE TABLE {name} AS SELECT * FROM read_parquet('{source}')")
+                    self._conn.execute(f"CREATE TABLE '{name}' AS SELECT * FROM read_parquet('{source}')")
                     source_type = 's3_parquet'
                 else:
-                    self._conn.execute(f"CREATE TABLE {name} AS SELECT * FROM read_csv_auto('{source}')")
+                    self._conn.execute(f"CREATE TABLE '{name}' AS SELECT * FROM read_csv_auto('{source}')")
                     source_type = 's3_csv'
             else:
                 # Local file
-                self._conn.execute(f"CREATE TABLE {name} AS SELECT * FROM read_csv_auto('{source}')")
+                self._conn.execute(f"CREATE TABLE '{name}' AS SELECT * FROM read_csv_auto('{source}')")
                 source_type = 'local_csv'
             source_path = source
         

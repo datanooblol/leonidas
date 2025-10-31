@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from .interface import PresignedUrlResponse, FileResponse
-from .services import generate_presigned_download_url, rename_file, confirm_file_upload, delete_user_file
+from .services import generate_presigned_download_url, rename_file, confirm_file_upload, delete_user_file, update_file_metadata_service, get_file_metadata_service, update_file_selection_service
 from package.core.auth_middleware import get_current_user
+from package.core.interface import FileMetadata
 
 router = APIRouter()
 
@@ -15,7 +16,7 @@ def confirm_upload(file_id: str, size: int, current_user: str = Depends(get_curr
     """Confirm file upload completion"""
     return confirm_file_upload(file_id, current_user, size)
 
-@router.put("/{file_id}/rename", response_model=FileResponse)
+@router.patch("/{file_id}/rename", response_model=FileResponse)
 def rename_file_endpoint(file_id: str, new_filename: str, current_user: str = Depends(get_current_user)):
     """Rename file"""
     return rename_file(file_id, current_user, new_filename)
@@ -24,3 +25,19 @@ def rename_file_endpoint(file_id: str, new_filename: str, current_user: str = De
 def delete_file(file_id: str, current_user: str = Depends(get_current_user)):
     """Delete file from S3 and database"""
     return delete_user_file(file_id, current_user)
+
+@router.get("/{file_id}/metadata", response_model=FileMetadata)
+def get_metadata(file_id: str, current_user: str = Depends(get_current_user)):
+    """Get file metadata"""
+    return get_file_metadata_service(file_id, current_user)
+
+@router.put("/{file_id}/metadata", response_model=FileResponse)
+def update_metadata(file_id: str, metadata: FileMetadata, current_user: str = Depends(get_current_user)):
+    """Update file metadata"""
+    return update_file_metadata_service(file_id, current_user, metadata)
+
+@router.patch("/{file_id}/selection")
+def update_selection(file_id: str, selected: bool, current_user: str = Depends(get_current_user)):
+    """Update file selection status"""
+    return update_file_selection_service(file_id, current_user, selected)
+

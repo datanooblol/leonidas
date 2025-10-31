@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from package.core.llm import Role
 from uuid import uuid4
+from .interface import Artifact
 
 dynamodb = boto3.resource('dynamodb', region_name=settings.AWS_REGION)
 messages_table = dynamodb.Table(settings.MESSAGES_TABLE)
@@ -24,6 +25,8 @@ class MessageDB(BaseModel):
     response_time_ms:Optional[int] = Field(default=None)
     reason:Optional[str] = Field(default=None)
     updated_at:Optional[str] = Field(default=None)
+    artifacts: Optional[List[dict]] = Field(default=None)
+    # artifacts: Optional[List[Artifact]] = Field(default=None)
 
 def get_history(session_id: str, limit: Optional[int] = None) -> List[MessageDB]:
     query_params = {
@@ -70,7 +73,8 @@ def create_assistant_message(
     input_tokens: int,
     output_tokens: int,
     response_time_ms: int,
-    reason: Optional[str] = None
+    reason: Optional[str] = None,
+    artifacts: Optional[List[Artifact]] = None
 ) -> MessageDB:
     message = MessageDB(
         session_id=session_id,
@@ -81,7 +85,8 @@ def create_assistant_message(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         response_time_ms=response_time_ms,
-        reason=reason
+        reason=reason,
+        artifacts=artifacts
     )
     messages_table.put_item(Item=message.model_dump())
     return message
