@@ -2,6 +2,7 @@ import duckdb
 from typing import Optional
 from pydantic import BaseModel
 import pandas as pd
+import os
 
 class AWSConfig(BaseModel):
     aws_access_key_id: Optional[str] = None
@@ -11,6 +12,10 @@ class AWSConfig(BaseModel):
 
 class DataCatalog:
     def __init__(self, aws_configs:Optional[AWSConfig]=None):
+        # Set HOME directory for Lambda environment
+        if not os.environ.get('HOME'):
+            os.environ['HOME'] = '/tmp'
+        
         self._conn = duckdb.connect()
         self._tables = {}
         self._relationships = []  # Store table relationships
@@ -30,9 +35,17 @@ class DataCatalog:
 
     def _setup_s3(self, aws_access_key_id=None, aws_secret_access_key=None, region_name='ap-southeast-1', aws_session_token=None):
         """Setup S3 connection using your existing logic"""
-
-        self._conn.execute("INSTALL httpfs")
-        self._conn.execute("LOAD httpfs")
+        try:
+            # Try to load first (for Docker/Lambda)
+            self._conn.execute("LOAD httpfs")
+        except Exception:
+            try:
+                # If load fails, install then load (for local)
+                self._conn.execute("INSTALL httpfs")
+                self._conn.execute("LOAD httpfs")
+            except Exception as e:
+                print(f"Warning: Failed to install/load httpfs: {e}")
+                return
         
         if aws_access_key_id and aws_secret_access_key:
             secret_sql = f"""
