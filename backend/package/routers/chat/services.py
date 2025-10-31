@@ -169,7 +169,9 @@ def _send_message_to_session(user_id: str, session_id: str, message_data: Messag
     
     # Handle data context if file_ids provided
     if file_ids:
+        print(f"DEBUG: About to call get_metadata_by_file_ids with: {file_ids}")
         file_metadata = get_metadata_by_file_ids(file_ids)
+        print(f"DEBUG: get_metadata_by_file_ids returned {len(file_metadata)} items")
         METADATAS = [
             FileMetadata(name=metadata.filename.split(".")[0], description=metadata.description, columns=[mc.model_dump() for mc in metadata.columns]).prompt() 
             for metadata in file_metadata
@@ -243,9 +245,11 @@ def send_message_with_selected_files(user_id: str, session_id: str, message_data
     if selected_files and chat_with_data:
         # Extract file_ids and use data chat logic
         file_ids = [file.file_id for file in selected_files]
+        print(f"DEBUG: Using data chat with file_ids: {file_ids}")
         return _send_message_to_session(user_id, session_id, message_data, file_ids)
     else:
         # Use regular chat (no data context)
+        print(f"DEBUG: Using regular chat (no data context)")
         return _send_message_to_session(user_id, session_id, message_data, None)
 
 

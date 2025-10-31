@@ -179,31 +179,63 @@ def update_file_metadata(file_id: str, name: str, description: str, columns: Lis
 
 def get_metadata_by_file_ids(file_ids: List[str]) -> List[FileDB]:
     """Get multiple files by IDs using batch operation"""
+    print(f"DEBUG: get_metadata_by_file_ids called with: {file_ids}")
+    print(f"DEBUG: file_ids type: {type(file_ids)}")
+    print(f"DEBUG: file_ids length: {len(file_ids) if file_ids else 'None'}")
+    
     if not file_ids:
+        print("DEBUG: file_ids is empty, returning []")
         return []
     
-    # DynamoDB batch_get_item has a limit of 100 items
+    # Filter out invalid file_ids
+    valid_file_ids = []
+    for i, file_id in enumerate(file_ids):
+        print(f"DEBUG: Processing file_id[{i}]: {repr(file_id)} (type: {type(file_id)})")
+        if file_id and isinstance(file_id, str) and len(file_id.strip()) > 0:
+            valid_file_ids.append(file_id.strip())
+        else:
+            print(f"DEBUG: Invalid file_id at index {i}: {repr(file_id)}")
+    
+    if not valid_file_ids:
+        print(f"DEBUG: No valid file_ids found in: {file_ids}")
+        return []
+    
+    print(f"DEBUG: Processing valid file_ids: {valid_file_ids}")
+    print(f"DEBUG: Using table: {settings.FILES_TABLE}")
+    
     batch_size = 100
     all_files = []
     
-    for i in range(0, len(file_ids), batch_size):
-        batch_ids = file_ids[i:i + batch_size]
+    for i in range(0, len(valid_file_ids), batch_size):
+        batch_ids = valid_file_ids[i:i + batch_size]
+        print(f"DEBUG: Processing batch: {batch_ids}")
         
-        response = dynamodb.batch_get_item(
-            RequestItems={
-                settings.FILES_TABLE: {
-                    'Keys': [{'file_id': file_id} for file_id in batch_ids]
+        try:
+            response = dynamodb.batch_get_item(
+                RequestItems={
+                    settings.FILES_TABLE: {
+                        'Keys': [{'file_id': file_id} for file_id in batch_ids]
+                    }
                 }
-            }
-        )
-        
-        items = response.get('Responses', {}).get(settings.FILES_TABLE, [])
-        for item in items:
-            # Convert columns dictionaries back to FieldDetail objects
-            if 'columns' in item and item['columns']:
-                item['columns'] = [FieldDetail(**col) for col in item['columns']]
-            all_files.append(FileDB(**item))
+            )
+            print(f"DEBUG: batch_get_item response: {response}")
+            
+            items = response.get('Responses', {}).get(settings.FILES_TABLE, [])
+            print(f"DEBUG: Found {len(items)} items in response")
+            
+            for item in items:
+                # Convert columns dictionaries back to FieldDetail objects
+                if 'columns' in item and item['columns']:
+                    item['columns'] = [FieldDetail(**col) for col in item['columns']]
+                all_files.append(FileDB(**item))
+                
+        except Exception as e:
+            print(f"DEBUG: batch_get_item failed with batch_ids: {batch_ids}")
+            print(f"DEBUG: Error: {str(e)}")
+            print(f"DEBUG: Error type: {type(e)}")
+            raise
     
+    print(f"DEBUG: Returning {len(all_files)} files")
     return all_files
 
 def update_file_selection_db(file_id: str, selected: bool) -> Optional[FileDB]:

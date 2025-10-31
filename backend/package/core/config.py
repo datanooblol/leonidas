@@ -27,6 +27,6 @@ class Settings:
     
     # Bedrock Configuration
     BEDROCK_MODEL_ID: str = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0")
-    MODEL_PROVIDER:str = os.getenv("MODEL_PROVIDER", "local")
+    MODEL_PROVIDER:str = os.getenv("MODEL_PROVIDER", "bedrock")
 
 settings = Settings()
