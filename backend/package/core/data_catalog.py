@@ -36,11 +36,16 @@ class DataCatalog:
     def _setup_s3(self, aws_access_key_id=None, aws_secret_access_key=None, region_name='ap-southeast-1', aws_session_token=None):
         """Setup S3 connection using your existing logic"""
         try:
-            self._conn.execute("INSTALL httpfs")
+            # Try to load first (for Docker/Lambda)
             self._conn.execute("LOAD httpfs")
-        except Exception as e:
-            print(f"Warning: Failed to install/load httpfs: {e}")
-            return
+        except Exception:
+            try:
+                # If load fails, install then load (for local)
+                self._conn.execute("INSTALL httpfs")
+                self._conn.execute("LOAD httpfs")
+            except Exception as e:
+                print(f"Warning: Failed to install/load httpfs: {e}")
+                return
         
         if aws_access_key_id and aws_secret_access_key:
             secret_sql = f"""
