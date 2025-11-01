@@ -5,6 +5,10 @@ from package.core.repositories import FileRepository, ProjectRepository
 from package.schemas.file import File, FileStatus, FileSource
 from package.core.interface import FieldDetail
 from package.routers.files.interface import FileResponse, FileListResponse
+from package.core.config import settings
+from package.core.data_catalog import DataCatalog
+from package.core.aws_config import get_aws_configs
+from package.core.interface import FileMetadata
 
 class FileService:
     def __init__(self, file_repo: FileRepository, project_repo: ProjectRepository):
@@ -173,6 +177,22 @@ class FileService:
             raise HTTPException(status_code=404, detail="File not found")
         
         updated_file = await self.file_repo.confirm_upload(file_id, size)
+        
+        # Create metadata after uploading complete
+        catalog = DataCatalog(aws_configs=get_aws_configs())
+        source = f"s3://{settings.FILE_BUCKET}/{updated_file.s3_key}"
+        catalog.register(name="mock", source=source)
+        file_df = catalog.query("DESCRIBE mock;")
+        
+        # Generate metadata from dataframe
+        fm = FileMetadata.from_dataframe(
+            name=updated_file.name or updated_file.filename.split(".")[0], 
+            description=updated_file.description, 
+            df=file_df
+        )
+        
+        # Update file with extracted metadata
+        final_file = await self.file_repo.update_metadata(file_id, fm.name, fm.description, fm.columns)
         
         return FileResponse(
             file_id=updated_file.file_id,

@@ -10,32 +10,32 @@ from package.routers.files.services import generate_presigned_upload_url
 
 router = APIRouter(prefix="/files", tags=["files"])
 
-@router.post("/projects/{project_id}/files", response_model=FileResponse)
-async def create_file_record(
-    project_id: str,
-    filename: str,
-    s3_key: str,
-    size: int,
-    file_id: Optional[str] = None,
-    status: FileStatus = FileStatus.UPLOADING,
-    source: FileSource = FileSource.USER_UPLOAD,
-    file_service: FileService = Depends(get_file_service),
-    current_user: str = Depends(get_current_user)
-):
-    return await file_service.create_file_record(
-        project_id, current_user, filename, s3_key, size, file_id, status, source
-    )
+# @router.post("/projects/{project_id}/files", response_model=FileResponse)
+# async def create_file_record(
+#     project_id: str,
+#     filename: str,
+#     s3_key: str,
+#     size: int,
+#     file_id: Optional[str] = None,
+#     status: FileStatus = FileStatus.UPLOADING,
+#     source: FileSource = FileSource.USER_UPLOAD,
+#     file_service: FileService = Depends(get_file_service),
+#     current_user: str = Depends(get_current_user)
+# ):
+#     return await file_service.create_file_record(
+#         project_id, current_user, filename, s3_key, size, file_id, status, source
+#     )
 
-@router.get("/projects/{project_id}/files", response_model=FileListResponse)
-async def get_project_files(
-    project_id: str,
-    status: Optional[str] = Query(None),
-    file_service: FileService = Depends(get_file_service),
-    current_user: str = Depends(get_current_user)
-):
-    return await file_service.get_project_files(project_id, current_user, status)
+# @router.get("/projects/{project_id}/files", response_model=FileListResponse)
+# async def get_project_files(
+#     project_id: str,
+#     status: Optional[str] = Query(None),
+#     file_service: FileService = Depends(get_file_service),
+#     current_user: str = Depends(get_current_user)
+# ):
+#     return await file_service.get_project_files(project_id, current_user, status)
 
-@router.get("/projects/{project_id}/files/selected", response_model=FileListResponse)
+@router.get("/{project_id}/selected", response_model=FileListResponse)
 async def get_selected_files(
     project_id: str,
     file_service: FileService = Depends(get_file_service),
@@ -80,7 +80,7 @@ async def update_file_selection(
 ):
     return await file_service.update_file_selection(file_id, current_user, selected)
 
-@router.post("/{file_id}/confirm", response_model=FileResponse)
+@router.get("/{file_id}/confirm", response_model=FileResponse)
 async def confirm_file_upload(
     file_id: str,
     size: int,
