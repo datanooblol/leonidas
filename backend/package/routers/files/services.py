@@ -96,6 +96,7 @@ def confirm_file_upload(file_id: str, user_id: str, size: int) -> FileResponse:
     source = f"s3://{settings.FILE_BUCKET}/{file_record.s3_key}"
     catalog.register(name="mock", source=source)
     file = catalog.query(f"DESCRIBE mock;")
+    print(file)
     fm = FileMetadata.from_dataframe(name=file_record.name, description=file_record.description, df=file)
     # Update file record with actual size
     updated_record = confirm_file_upload_record(file_id, size)

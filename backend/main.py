@@ -2,11 +2,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
-from package.routers.auth.endpoint import router as auth_router
-from package.routers.projects.endpoint import router as projects_router
-from package.routers.sessions.endpoint import router as sessions_router
-from package.routers.files.endpoint import router as files_router
-from package.routers.chat.endpoint import router as chat_router
+# from package.routers.auth.endpoint import router as auth_router
+# from package.routers.projects.endpoint import router as projects_router
+# from package.routers.sessions.endpoint import router as sessions_router
+# from package.routers.files.endpoint import router as files_router
+# from package.routers.chat.endpoint import router as chat_router
+
+from package.routers.auth.router import router as auth_router
+from package.routers.projects.router import router as projects_router
+from package.routers.sessions.router import router as sessions_router
+from package.routers.files.router import router as files_router
+from package.routers.chat.router import router as chat_router
+
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -23,11 +30,17 @@ app.add_middleware(
 )
 
 # Register routers
-app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
-app.include_router(projects_router, prefix="/projects", tags=["Projects"])
-app.include_router(sessions_router, prefix="/sessions", tags=["Sessions"])
-app.include_router(files_router, prefix="/files", tags=["Files"])
-app.include_router(chat_router, tags=["Chat"])
+# app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+# app.include_router(projects_router, prefix="/projects", tags=["Projects"])
+# app.include_router(sessions_router, prefix="/sessions", tags=["Sessions"])
+# app.include_router(files_router, prefix="/files", tags=["Files"])
+# app.include_router(chat_router, tags=["Chat"])
+
+app.include_router(auth_router)
+app.include_router(projects_router)
+app.include_router(sessions_router)
+app.include_router(files_router)
+app.include_router(chat_router)
 
 @app.get("/")
 def root():
@@ -37,9 +50,9 @@ def root():
 def health_check():
     return {"status": "healthy"}
 
-@app.get("/favicon.ico")
-def favicon():
-    return {"message": "No favicon"}
+# @app.get("/favicon.ico")
+# def favicon():
+#     return {"message": "No favicon"}
 
 # Lambda handler
 handler = Mangum(app)
