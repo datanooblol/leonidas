@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 class Settings:
+    # Database Configuration
+    DATABASE_TYPE: str = os.getenv("DATABASE_TYPE", "dynamodb")
+    
     # JWT Configuration
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
     JWT_ALGORITHM: str = "HS256"
