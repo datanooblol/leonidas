@@ -5,7 +5,8 @@ from package.services.file_service import FileService
 from package.core.auth_middleware import get_current_user
 from package.schemas.file import FileStatus, FileSource
 from package.core.interface import FieldDetail
-from .interface import FileResponse, FileListResponse
+from .interface import FileResponse, FileListResponse, PresignedUrlResponse
+from package.routers.files.services import generate_presigned_upload_url
 
 router = APIRouter(prefix="/files", tags=["files"])
 
@@ -98,3 +99,8 @@ async def delete_file(
     if not success:
         raise HTTPException(status_code=404, detail="File not found")
     return {"message": "File deleted successfully"}
+
+@router.post("/{project_id}/upload-url", response_model=PresignedUrlResponse)
+def get_upload_url(project_id: str, filename: str, current_user: str = Depends(get_current_user)):
+    """Get presigned URL for file upload"""
+    return generate_presigned_upload_url(project_id, current_user, filename)
