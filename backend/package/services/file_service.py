@@ -4,7 +4,7 @@ from typing import List, Optional
 from package.core.repositories import FileRepository, ProjectRepository
 from package.schemas.file import File, FileStatus, FileSource
 from package.core.interface import FieldDetail
-from package.routers.files.interface import FileResponse, FileListResponse
+from package.routers.files.interface import FileResponse, FileListResponse, FileMetadataResponse
 from package.core.config import settings
 from package.core.data_catalog import DataCatalog
 from package.core.aws_config import get_aws_configs
@@ -62,6 +62,7 @@ class FileService:
                 size=file.size,
                 status=file.status,
                 source=file.source,
+                selected=file.selected,
                 created_at=datetime.fromisoformat(file.created_at),
                 updated_at=datetime.fromisoformat(file.updated_at)
             )
@@ -81,13 +82,17 @@ class FileService:
         if not project:
             raise HTTPException(status_code=404, detail="File not found")
         
-        return FileResponse(
+        return FileMetadataResponse(
             file_id=file.file_id,
             project_id=file.project_id,
             filename=file.filename,
             size=file.size,
             status=file.status,
             source=file.source,
+            name=file.name,
+            description=file.description,
+            selected=file.selected,
+            columns=file.columns,
             created_at=datetime.fromisoformat(file.created_at),
             updated_at=datetime.fromisoformat(file.updated_at)
         )
@@ -115,7 +120,7 @@ class FileService:
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
-    
+
     async def update_file_metadata(self, file_id: str, user_id: str, name: str, 
                                  description: str, columns: List[FieldDetail]) -> FileResponse:
         """Update file metadata"""
