@@ -1,8 +1,41 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useState } from 'react';
+import React from 'react';
 
 interface MarkdownRendererProps {
   content: string;
+}
+
+function CodeBlock({ children }: { children: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  
+  const copyToClipboard = () => {
+    // Extract text from nested code element
+    let codeText = '';
+    if (React.isValidElement(children) && children.props.children) {
+      codeText = children.props.children;
+    } else {
+      codeText = children?.toString() || '';
+    }
+    
+    navigator.clipboard.writeText(codeText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative group">
+      <pre className="bg-gray-100 dark:bg-gray-700 p-3 rounded overflow-x-auto pr-12">{children}</pre>
+      <button
+        onClick={copyToClipboard}
+        className="absolute top-2 right-2 p-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+        title="Copy code"
+      >
+        {copied ? '✓' : '📋'}
+      </button>
+    </div>
+  );
 }
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
@@ -15,7 +48,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
           h2: ({children}) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
           p: ({children}) => <p className="mb-2">{children}</p>,
           code: ({children}) => <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded text-sm">{children}</code>,
-          pre: ({children}) => <pre className="bg-gray-100 dark:bg-gray-700 p-3 rounded overflow-x-auto">{children}</pre>,
+          pre: ({children}) => <CodeBlock>{children}</CodeBlock>,
           ul: ({children}) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
           ol: ({children}) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
           li: ({children}) => <li className="mb-1">{children}</li>,

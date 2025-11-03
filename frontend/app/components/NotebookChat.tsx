@@ -164,13 +164,17 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
   }
 
   const toggleFileSelection = (fileId: string) => {
+    const file = files.find(f => f.file_id === fileId)
     const newSelected = new Set(selectedFiles)
     if (newSelected.has(fileId)) {
       newSelected.delete(fileId)
+      console.log('❌ ยกเลิกเลือกไฟล์:', file?.filename)
     } else {
       newSelected.add(fileId)
+      console.log('✅ เลือกไฟล์:', file?.filename)
     }
     setSelectedFiles(newSelected)
+    console.log('📁 ไฟล์ที่เลือกทั้งหมด:', Array.from(newSelected).map(id => files.find(f => f.file_id === id)?.filename))
   }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -203,6 +207,14 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
     const messageContent = input
     setInput('')
     setIsLoading(true)
+
+    // Log selected files and message being sent
+    const selectedFileNames = Array.from(selectedFiles).map(id => files.find(f => f.file_id === id)?.filename)
+    console.log('🚀 ส่งข้อความไปยัง Backend:')
+    console.log('📝 ข้อความ:', messageContent)
+    console.log('📁 ไฟล์ที่เลือก:', selectedFileNames)
+    console.log('🆔 Session ID:', sessionId)
+    console.log('🆔 File IDs:', Array.from(selectedFiles))
 
     try {
       const response = await apiService.sendMessage(sessionId, messageContent)

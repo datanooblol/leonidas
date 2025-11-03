@@ -16,6 +16,10 @@ export default function TestPage() {
   const [error, setError] = useState('')
   const [showMarkdown, setShowMarkdown] = useState<{[key: number]: boolean}>({})
   const [fileData, setFileData] = useState<any[]>([])
+  const [allProjects, setAllProjects] = useState<any[]>([])
+  const [allSessions, setAllSessions] = useState<any[]>([])
+  const [selectedFileId, setSelectedFileId] = useState('')
+  const [fileMetadata, setFileMetadata] = useState<any>(null)
 
   const handleLogin = async () => {
     setIsLoading(true)
@@ -102,6 +106,52 @@ export default function TestPage() {
     }
   }
 
+  const loadAllProjects = async () => {
+    setIsLoading(true)
+    setError('')
+    try {
+      const projects = await apiService.getProjects()
+      console.log('📂 All Projects:', projects)
+      setAllProjects(projects)
+    } catch (error) {
+      setError('Load projects failed: ' + (error as Error).message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadAllSessions = async () => {
+    if (!projectId) return
+    
+    setIsLoading(true)
+    setError('')
+    try {
+      const sessions = await apiService.getSessions(projectId)
+      console.log('💬 All Sessions:', sessions)
+      setAllSessions(sessions)
+    } catch (error) {
+      setError('Load sessions failed: ' + (error as Error).message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadFileMetadata = async () => {
+    if (!selectedFileId) return
+    
+    setIsLoading(true)
+    setError('')
+    try {
+      const metadata = await apiService.getFileMetadata(selectedFileId)
+      console.log('📊 File Metadata:', metadata)
+      setFileMetadata(metadata)
+    } catch (error) {
+      setError('Load metadata failed: ' + (error as Error).message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen p-8 bg-black">
       <div className="max-w-4xl mx-auto">
@@ -138,6 +188,14 @@ export default function TestPage() {
           <div className="bg-gray-800 p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4 text-white">Chat Test</h2>
             <div className="space-y-4">
+              <div className="bg-gray-900 p-3 rounded mb-4">
+                <h4 className="text-sm font-medium mb-2 text-white">Current IDs:</h4>
+                <div className="text-xs text-gray-300 space-y-1">
+                  <div>📂 Project ID: {projectId || 'None'}</div>
+                  <div>💬 Session ID: {sessionId || 'None'}</div>
+                  <div>📁 File ID: {selectedFileId || 'None'}</div>
+                </div>
+              </div>
               <input
                 type="text"
                 placeholder="Project ID"
@@ -150,6 +208,13 @@ export default function TestPage() {
                 placeholder="Session ID"
                 value={sessionId}
                 onChange={(e) => setSessionId(e.target.value)}
+                className="w-full px-3 py-2 border rounded bg-gray-700 text-white border-gray-600"
+              />
+              <input
+                type="text"
+                placeholder="File ID (for metadata)"
+                value={selectedFileId}
+                onChange={(e) => setSelectedFileId(e.target.value)}
                 className="w-full px-3 py-2 border rounded bg-gray-700 text-white border-gray-600"
               />
               <textarea
@@ -181,6 +246,26 @@ export default function TestPage() {
                   Load Files
                 </button>
                 <button
+                  onClick={loadAllProjects}
+                  className="px-4 py-2 bg-indigo-500 text-white rounded disabled:opacity-50"
+                >
+                  Load Projects
+                </button>
+                <button
+                  onClick={loadAllSessions}
+                  disabled={!projectId}
+                  className="px-4 py-2 bg-pink-500 text-white rounded disabled:opacity-50"
+                >
+                  Load Sessions
+                </button>
+                <button
+                  onClick={loadFileMetadata}
+                  disabled={!selectedFileId}
+                  className="px-4 py-2 bg-orange-500 text-white rounded disabled:opacity-50"
+                >
+                  Get Metadata
+                </button>
+                <button
                   onClick={() => setIsLoggedIn(false)}
                   className="px-4 py-2 bg-red-500 text-white rounded"
                 >
@@ -197,13 +282,76 @@ export default function TestPage() {
           </div>
         )}
 
+        {allProjects.length > 0 && (
+          <div className="bg-gray-800 p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-white">All Projects</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              {allProjects.map((project) => (
+                <div key={project.project_id} className="bg-gray-900 p-3 rounded border border-gray-600">
+                  <div className="text-white text-sm font-medium">{project.name}</div>
+                  <div className="text-yellow-400 text-xs font-mono">{project.project_id}</div>
+                  <div className="text-gray-400 text-xs">{project.description}</div>
+                  <button
+                    onClick={() => setProjectId(project.project_id)}
+                    className="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-xs"
+                  >
+                    Use This Project
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {allSessions.length > 0 && (
+          <div className="bg-gray-800 p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-white">All Sessions (Project: {projectId})</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              {allSessions.map((session) => (
+                <div key={session.session_id} className="bg-gray-900 p-3 rounded border border-gray-600">
+                  <div className="text-white text-sm font-medium">{session.name}</div>
+                  <div className="text-cyan-400 text-xs font-mono">{session.session_id}</div>
+                  <div className="text-gray-400 text-xs">{new Date(session.created_at).toLocaleString()}</div>
+                  <button
+                    onClick={() => setSessionId(session.session_id)}
+                    className="mt-2 px-2 py-1 bg-green-500 text-white rounded text-xs"
+                  >
+                    Use This Session
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {fileMetadata && (
+          <div className="bg-gray-800 p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-white">File Metadata</h2>
+            <div className="bg-gray-900 p-4 rounded overflow-x-auto">
+              <pre className="text-blue-400 text-sm whitespace-pre-wrap">
+                {JSON.stringify(fileMetadata, null, 2)}
+              </pre>
+            </div>
+          </div>
+        )}
+
         {fileData.length > 0 && (
           <div className="bg-gray-800 p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4 text-white">File Data</h2>
-            <div className="bg-gray-900 p-4 rounded overflow-x-auto">
-              <pre className="text-green-400 text-sm whitespace-pre-wrap">
-                {JSON.stringify(fileData, null, 2)}
-              </pre>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              {fileData.map((file) => (
+                <div key={file.file_id} className="bg-gray-900 p-3 rounded border border-gray-600">
+                  <div className="text-white text-sm font-medium">{file.filename}</div>
+                  <div className="text-yellow-400 text-xs font-mono">{file.file_id}</div>
+                  <div className="text-gray-400 text-xs">{file.file_type} - {file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'Unknown size'}</div>
+                  <button
+                    onClick={() => setSelectedFileId(file.file_id)}
+                    className="mt-2 px-2 py-1 bg-orange-500 text-white rounded text-xs"
+                  >
+                    Select for Metadata
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
