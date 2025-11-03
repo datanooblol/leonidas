@@ -5,7 +5,7 @@ from package.services.file_service import FileService
 from package.core.auth_middleware import get_current_user
 from package.schemas.file import FileStatus, FileSource
 from package.core.interface import FieldDetail
-from .interface import FileResponse, FileListResponse, PresignedUrlResponse
+from .interface import FileResponse, FileListResponse, PresignedUrlResponse, FileMetadataResponse
 from package.routers.files.services import generate_presigned_upload_url
 
 router = APIRouter(prefix="/files", tags=["files"])
@@ -59,6 +59,14 @@ async def update_file_status(
     current_user: str = Depends(get_current_user)
 ):
     return await file_service.update_file_status(file_id, current_user, status)
+
+@router.get("/{file_id}/metadata", response_model=FileMetadataResponse)
+async def get_file_metadata(
+    file_id: str,
+    file_service: FileService = Depends(get_file_service),
+    current_user: str = Depends(get_current_user)
+):
+    return await file_service.get_file(file_id, current_user)
 
 @router.patch("/{file_id}/metadata", response_model=FileResponse)
 async def update_file_metadata(
