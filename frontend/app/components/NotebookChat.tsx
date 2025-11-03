@@ -56,6 +56,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
   const [fileMetadata, setFileMetadata] = useState<Record<string, FileMetadata>>({})
   const [showMetadata, setShowMetadata] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState<string | null>(null)
+  const [chatWithData, setChatWithData] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -164,6 +165,8 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
   }
 
   const toggleFileSelection = (fileId: string) => {
+    if (!chatWithData) return // ไม่สามารถเลือกไฟล์ได้เมื่อปิด Chat with Data
+    
     const file = files.find(f => f.file_id === fileId)
     const newSelected = new Set(selectedFiles)
     if (newSelected.has(fileId)) {
@@ -217,7 +220,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
     console.log('🆔 File IDs:', Array.from(selectedFiles))
 
     try {
-      const response = await apiService.sendMessage(sessionId, messageContent)
+      const response = await apiService.sendMessage(sessionId, messageContent, chatWithData)
       
       const assistantMessage: Message = {
         id: response.id,
@@ -247,6 +250,33 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}>
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          {/* Chat with Data Toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Chat with Data</span>
+              <button
+                onClick={() => {
+                  setChatWithData(!chatWithData)
+                  if (!chatWithData) {
+                    setSelectedFiles(new Set()) // ล้างการเลือกไฟล์เมื่อปิด
+                  }
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  chatWithData ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    chatWithData ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {chatWithData ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+            </span>
+          </div>
+          
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">เอกสารแหล่งข้อมูล</h2>
             <input
@@ -288,14 +318,18 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                 <div
                   key={file.file_id}
                   className={`p-3 rounded-lg border transition-all ${
-                    selectedFiles.has(file.file_id)
+                    !chatWithData
+                      ? 'border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50'
+                      : selectedFiles.has(file.file_id)
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
                       : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <div 
                     onClick={() => toggleFileSelection(file.file_id)}
-                    className="flex items-start justify-between cursor-pointer"
+                    className={`flex items-start justify-between ${
+                      chatWithData ? 'cursor-pointer' : 'cursor-not-allowed'
+                    }`}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -323,7 +357,12 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                         loadFileMetadata(file.file_id)
                         setShowMetadata(file.file_id)
                       }}
-                      className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 bg-blue-50 dark:bg-blue-900 rounded"
+                      disabled={!chatWithData}
+                      className={`text-xs px-2 py-1 rounded ${
+                        chatWithData 
+                          ? 'text-blue-600 hover:text-blue-800 bg-blue-50 dark:bg-blue-900'
+                          : 'text-gray-400 bg-gray-100 dark:bg-gray-600 cursor-not-allowed'
+                      }`}
                     >
                       📊 ดูข้อมูล
                     </button>
@@ -333,7 +372,12 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                         loadFileMetadata(file.file_id)
                         setShowPreview(file.file_id)
                       }}
-                      className="text-xs text-purple-600 hover:text-purple-800 px-2 py-1 bg-purple-50 dark:bg-purple-900 rounded"
+                      disabled={!chatWithData}
+                      className={`text-xs px-2 py-1 rounded ${
+                        chatWithData
+                          ? 'text-purple-600 hover:text-purple-800 bg-purple-50 dark:bg-purple-900'
+                          : 'text-gray-400 bg-gray-100 dark:bg-gray-600 cursor-not-allowed'
+                      }`}
                     >
                       👁️ ดูตัวอย่าง
                     </button>
@@ -367,7 +411,12 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                 DS Bro - AI Data Scientist
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {selectedFiles.size > 0 ? `ใช้ข้อมูลจาก ${selectedFiles.size} ไฟล์` : 'พร้อมช่วยวิเคราะห์ข้อมูล'}
+                {chatWithData 
+                  ? selectedFiles.size > 0 
+                    ? `ใช้ข้อมูลจาก ${selectedFiles.size} ไฟล์` 
+                    : 'พร้อมช่วยวิเคราะห์ข้อมูล'
+                  : 'โหมดแชทธรรมดา'
+                }
               </p>
             </div>
           </div>
@@ -380,7 +429,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
               <div className="text-center text-gray-500 dark:text-gray-400">
                 <div className="text-4xl mb-4">🤖</div>
                 <h2 className="text-xl font-medium mb-2">สวัสดี bro!</h2>
-                <p>เลือกเอกสารจากด้านซ้าย แล้วเริ่มถามคำถามได้เลย</p>
+                <p>{chatWithData ? 'เลือกเอกสารจากด้านซ้าย แล้วเริ่มถามคำถามได้เลย' : 'เปิด "Chat with Data" เพื่อวิเคราะห์ข้อมูลของคุณ'}</p>
               </div>
             </div>
           ) : (
@@ -441,7 +490,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                   sendMessage()
                 }
               }}
-              placeholder="ถามคำถามเกี่ยวกับเอกสารของคุณ..."
+              placeholder={chatWithData ? "ถามคำถามเกี่ยวกับเอกสารของคุณ..." : "พิมพ์ข้อความของคุณ bro..."}
               className="flex-1 resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               rows={1}
               disabled={isLoading}

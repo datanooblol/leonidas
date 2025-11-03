@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { apiService } from '../lib/api'
+import MetadataModal from './MetadataModal'
 
 interface FileData {
   file_id: string
@@ -8,6 +9,25 @@ interface FileData {
   size: number
   file_type: string
   created_at: string
+}
+
+interface FileMetadata {
+  file_id: string
+  filename: string
+  file_type: string
+  rows?: number
+  columns?: ColumnMetadata[]
+  preview?: Record<string, any>[]
+}
+
+interface ColumnMetadata {
+  name: string
+  dtype: string
+  nullable: boolean
+  unique_values?: number
+  sample_values?: any[]
+  description?: string
+  input_type?: string
 }
 
 interface FileManagerProps {
@@ -19,6 +39,8 @@ interface FileManagerProps {
 export default function FileManager({ projectId, files, onFilesUpdate }: FileManagerProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [showMetadata, setShowMetadata] = useState<string | null>(null)
+  const [fileMetadata, setFileMetadata] = useState<Record<string, FileMetadata>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const formatFileSize = (bytes: number) => {
@@ -84,6 +106,46 @@ export default function FileManager({ projectId, files, onFilesUpdate }: FileMan
     }
   }
 
+  const loadFileMetadata = async (fileId: string) => {
+    const file = files.find(f => f.file_id === fileId)
+    if (!file) return
+
+    // Mock data - replace with real API call
+    const mockMetadata: FileMetadata = {
+      file_id: fileId,
+      filename: file.filename,
+      file_type: file.file_type,
+      rows: Math.floor(Math.random() * 10000) + 100,
+      columns: [
+        { 
+          name: "id", 
+          dtype: "int64", 
+          nullable: false, 
+          unique_values: 1000, 
+          sample_values: [1, 2, 3],
+          description: "รหัสประจำตัว",
+          input_type: "ID"
+        },
+        { 
+          name: "name", 
+          dtype: "object", 
+          nullable: true, 
+          unique_values: 800, 
+          sample_values: ["John", "Jane", "Bob"],
+          description: "ชื่อ",
+          input_type: "input"
+        }
+      ]
+    }
+    
+    setFileMetadata(prev => ({ ...prev, [fileId]: mockMetadata }))
+  }
+
+  const handleMetadataSave = (updatedMetadata: FileMetadata) => {
+    setFileMetadata(prev => ({ ...prev, [updatedMetadata.file_id]: updatedMetadata }))
+    console.log('Updated metadata:', updatedMetadata)
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       <div className="flex justify-between items-center mb-4">
@@ -133,6 +195,16 @@ export default function FileManager({ projectId, files, onFilesUpdate }: FileMan
               <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center space-x-2">
                 <span>{file.file_type}</span>
                 <button
+                  onClick={() => {
+                    loadFileMetadata(file.file_id)
+                    setShowMetadata(file.file_id)
+                  }}
+                  className="text-blue-500 hover:text-blue-700"
+                  title="ดู metadata"
+                >
+                  📊
+                </button>
+                <button
                   onClick={() => handleDeleteFile(file.file_id, file.filename)}
                   className="text-red-500 hover:text-red-700"
                 >
@@ -142,6 +214,15 @@ export default function FileManager({ projectId, files, onFilesUpdate }: FileMan
             </div>
           ))}
         </div>
+      )}
+      
+      {/* Metadata Modal */}
+      {showMetadata && fileMetadata[showMetadata] && (
+        <MetadataModal
+          metadata={fileMetadata[showMetadata]}
+          onClose={() => setShowMetadata(null)}
+          onSave={handleMetadataSave}
+        />
       )}
     </div>
   )

@@ -22,6 +22,8 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [sessionName, setSessionName] = useState('')
+  const [chatWithData, setChatWithData] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -49,15 +51,20 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
         }))
         console.log('💬 Formatted messages:', formattedMessages.length, 'messages')
         setMessages(formattedMessages)
+        
+        // Load selected files for chat with data
+        const files = await apiService.getSelectedFiles(projectId)
+        console.log('📁 Selected files loaded:', files.length, 'files')
+        setSelectedFiles(files)
       } catch (error) {
-        console.error('❌ Error loading chat history:', error)
+        console.error('❌ Error loading session data:', error)
       }
     }
 
     // Reset messages when switching sessions
     setMessages([])
     loadSessionData()
-  }, [sessionId])
+  }, [sessionId, projectId])
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return
@@ -75,7 +82,7 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
     setIsLoading(true)
 
     try {
-      const response = await apiService.sendMessage(sessionId, messageContent)
+      const response = await apiService.sendMessage(sessionId, messageContent, chatWithData)
       
       const assistantMessage: Message = {
         id: response.id,
@@ -146,7 +153,7 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
                 <div className="text-4xl mb-4">🤖</div>
                 <h2 className="text-xl font-medium mb-2">สวัสดี bro!</h2>
                 <p>ผมเป็น DS Bro พร้อมช่วยเหลือคุณในการวิเคราะห์ข้อมูล</p>
-                <p className="text-sm mt-2">พิมพ์ข้อความเพื่อเริ่มแชท</p>
+                <p className="text-sm mt-2">เปิด "Chat with Data" เพื่อวิเคราะห์ข้อมูลของคุณ</p>
               </div>
             </div>
           ) : (
@@ -198,12 +205,34 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
 
         {/* Input Area */}
         <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+          {/* Chat with Data Toggle */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Chat with Data</span>
+              <button
+                onClick={() => setChatWithData(!chatWithData)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  chatWithData ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    chatWithData ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {chatWithData ? `เปิดใช้งาน (${selectedFiles.length} ไฟล์)` : 'แชทธรรมดา'}
+            </span>
+          </div>
+          
           <div className="flex space-x-2">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="พิมพ์ข้อความของคุณ bro..."
+              placeholder={chatWithData ? "ถามเกี่ยวกับข้อมูลของคุณ bro..." : "พิมพ์ข้อความของคุณ bro..."}
               className="flex-1 resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               rows={1}
               disabled={isLoading}
