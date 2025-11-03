@@ -93,7 +93,6 @@ class FileService:
             selected=file.selected,
             name=file.name,
             description=file.description,
-            selected=file.selected,
             columns=file.columns,
             created_at=datetime.fromisoformat(file.created_at),
             updated_at=datetime.fromisoformat(file.updated_at)
