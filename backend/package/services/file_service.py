@@ -41,6 +41,7 @@ class FileService:
             size=created_file.size,
             status=created_file.status,
             source=created_file.source,
+            selected=False,
             created_at=datetime.fromisoformat(created_file.created_at),
             updated_at=datetime.fromisoformat(created_file.updated_at)
         )
@@ -89,6 +90,7 @@ class FileService:
             size=file.size,
             status=file.status,
             source=file.source,
+            selected=file.selected,
             name=file.name,
             description=file.description,
             selected=file.selected,
@@ -117,6 +119,7 @@ class FileService:
             size=updated_file.size,
             status=updated_file.status,
             source=updated_file.source,
+            selected=updated_file.selected,
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
@@ -142,6 +145,7 @@ class FileService:
             size=updated_file.size,
             status=updated_file.status,
             source=updated_file.source,
+            selected=updated_file.selected,
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
@@ -166,6 +170,7 @@ class FileService:
             size=updated_file.size,
             status=updated_file.status,
             source=updated_file.source,
+            selected=updated_file.selected,
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
@@ -206,6 +211,7 @@ class FileService:
             size=updated_file.size,
             status=updated_file.status,
             source=updated_file.source,
+            selected=updated_file.selected,
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
@@ -227,6 +233,7 @@ class FileService:
                 size=file.size,
                 status=file.status,
                 source=file.source,
+                selected=file.selected,
                 created_at=datetime.fromisoformat(file.created_at),
                 updated_at=datetime.fromisoformat(file.updated_at)
             )
