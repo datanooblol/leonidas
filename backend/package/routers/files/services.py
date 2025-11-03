@@ -12,6 +12,19 @@ from package.core.interface import FileMetadata
 
 s3_client = boto3.client('s3', region_name=settings.AWS_REGION)
 
+def verify_file_ownership(file_id: str, user_id: str):
+    """Verify file exists and user owns the project"""
+    file_record = get_file_by_id(file_id)
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    project = get_project_by_id(file_record.project_id, user_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return file_record
+
+
 def generate_presigned_upload_url(project_id: str, user_id: str, filename: str) -> PresignedUrlResponse:
     """Generate presigned URL for file upload"""
     # Verify project ownership
@@ -60,16 +73,7 @@ def generate_presigned_upload_url(project_id: str, user_id: str, filename: str) 
 
 def generate_presigned_download_url(file_id: str, user_id: str) -> PresignedUrlResponse:
     """Generate presigned URL for file download"""
-    # Get file record
-    file_record = get_file_by_id(file_id)
-    if not file_record:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    # Verify project ownership
-    project = get_project_by_id(file_record.project_id, user_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="File not found")
-    
+    file_record = verify_file_ownership(file_id, user_id)
     try:
         # Generate presigned GET URL
         download_url = s3_client.generate_presigned_url(
@@ -85,22 +89,14 @@ def generate_presigned_download_url(file_id: str, user_id: str) -> PresignedUrlR
 
 def confirm_file_upload(file_id: str, user_id: str, size: int) -> FileResponse:
     """Confirm file upload and update record"""
-    file_record = get_file_by_id(file_id)
-    if not file_record:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    # Verify project ownership
-    project = get_project_by_id(file_record.project_id, user_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="File not found")
-    
+    file_record = verify_file_ownership(file_id, user_id)
+
     # Create metadata after uploading complete
     catalog = DataCatalog(aws_configs=get_aws_configs())
     source = f"s3://{settings.FILE_BUCKET}/{file_record.s3_key}"
-    # source = "s3://leonidas-dev-uploads-9586b382/fc7dd676-617b-4a5a-b9b9-31ad6ebc9d4a/5cdeff3a-e761-463d-88c8-ac910eb75bdf/files/ce2f195b-bfa3-49bf-be7b-e213fffcf74d_tips.csv"
-    print("SOURCE:", source)
     catalog.register(name="mock", source=source)
     file = catalog.query(f"DESCRIBE mock;")
+    print(file)
     fm = FileMetadata.from_dataframe(name=file_record.name, description=file_record.description, df=file)
     # Update file record with actual size
     updated_record = confirm_file_upload_record(file_id, size)
@@ -119,16 +115,7 @@ def confirm_file_upload(file_id: str, user_id: str, size: int) -> FileResponse:
 
 def rename_file(file_id: str, user_id: str, new_filename: str) -> FileResponse:
     """Rename file"""
-    # Get file record
-    file_record = get_file_by_id(file_id)
-    if not file_record:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    # Verify project ownership
-    project = get_project_by_id(file_record.project_id, user_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="File not found")
-    
+    file_record = verify_file_ownership(file_id, user_id)
     # Validate file type (CSV only)
     if not new_filename.lower().endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed")
@@ -174,15 +161,7 @@ def get_files_for_project(project_id: str, user_id: str) -> FileListResponse:
 
 def delete_user_file(file_id: str, user_id: str) -> dict:
     """Delete file from S3 and database"""
-    file_record = get_file_by_id(file_id)
-    if not file_record:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    # Verify project ownership
-    project = get_project_by_id(file_record.project_id, user_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="File not found")
-    
+    file_record = verify_file_ownership(file_id, user_id)
     try:
         # Delete from S3
         s3_client.delete_object(
@@ -202,13 +181,7 @@ def delete_user_file(file_id: str, user_id: str) -> dict:
 
 def update_file_metadata_service(file_id: str, user_id: str, metadata: FileMetadata) -> FileResponse:
     """Update file metadata"""
-    # Verify file ownership
-    file_record = get_file_by_id(file_id)
-    if not file_record:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    # Verify project ownership (assuming you have this validation)
-    # validate_project_ownership(file_record.project_id, user_id)
+    file_record = verify_file_ownership(file_id, user_id)
     
     # Update metadata
     updated_file = update_file_metadata(file_id, metadata.name, metadata.description, metadata.columns)
@@ -219,13 +192,7 @@ def update_file_metadata_service(file_id: str, user_id: str, metadata: FileMetad
 
 def get_file_metadata_service(file_id: str, user_id: str) -> FileMetadata:
     """Get file metadata"""
-    file_record = get_file_by_id(file_id)
-    if not file_record:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    # Verify project ownership if needed
-    # validate_project_ownership(file_record.project_id, user_id)
-    
+    file_record = verify_file_ownership(file_id, user_id)
     return FileMetadata(
         file_id=file_record.file_id,
         name=file_record.name,
@@ -235,16 +202,7 @@ def get_file_metadata_service(file_id: str, user_id: str) -> FileMetadata:
 
 def update_file_selection_service(file_id: str, user_id: str, selected: bool) -> FileResponse:
     """Update file selection status"""
-    # Get file record
-    file_record = get_file_by_id(file_id)
-    if not file_record:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    # Verify project ownership
-    project = get_project_by_id(file_record.project_id, user_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="File not found")
-    
+    file_record = verify_file_ownership(file_id, user_id)
     # Update selection status
     updated_record = update_file_selection_db(file_id, selected)
     if not updated_record:

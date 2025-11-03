@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from package.core.config import settings
+from jose import jwt, ExpiredSignatureError, JWTError
 
 security = HTTPBearer()
 
@@ -27,9 +28,9 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
         return user_id
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.JWTError:
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def get_current_user(user_id: str = Depends(verify_token)) -> str:

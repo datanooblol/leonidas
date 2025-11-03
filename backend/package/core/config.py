@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 class Settings:
+    # Database Configuration
+    DATABASE_TYPE: str = os.getenv("DATABASE_TYPE", "dynamodb")
+    
     # JWT Configuration
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
     JWT_ALGORITHM: str = "HS256"
@@ -27,6 +30,6 @@ class Settings:
     
     # Bedrock Configuration
     BEDROCK_MODEL_ID: str = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0")
-    MODEL_PROVIDER:str = os.getenv("MODEL_PROVIDER", "local")
+    MODEL_PROVIDER:str = os.getenv("MODEL_PROVIDER", "bedrock")
 
 settings = Settings()

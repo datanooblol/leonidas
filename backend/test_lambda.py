@@ -37,10 +37,24 @@ class TestLambdaContainer(unittest.TestCase):
         cls._wait_for_container()
     
     @classmethod
-    def _wait_for_container(cls, max_retries=30):
+    def _wait_for_container(cls, max_retries=60):
         """Wait for container to be ready to accept requests"""
         for i in range(max_retries):
             try:
+                # Check if container is still running first
+                result = subprocess.run(
+                    ["docker", "ps", "-q", "-f", f"id={cls.container_id}"],
+                    capture_output=True, text=True, check=False
+                )
+                if not result.stdout.strip():
+                    # Container stopped, get logs
+                    logs = subprocess.run(
+                        ["docker", "logs", cls.container_id],
+                        capture_output=True, text=True, check=False
+                    )
+                    print(f"Container logs:\n{logs.stdout}\n{logs.stderr}")
+                    raise Exception("Container stopped unexpectedly")
+                
                 event = cls._create_api_gateway_event("/health")
                 response = requests.post(
                     "http://localhost:9000/2015-03-31/functions/function/invocations",
@@ -50,8 +64,21 @@ class TestLambdaContainer(unittest.TestCase):
                 if response.status_code == 200:
                     print("Container is ready!")
                     return
-            except:
-                time.sleep(1)
+            except requests.exceptions.RequestException:
+                pass  # Expected during startup
+            except Exception as e:
+                print(f"Error checking container: {e}")
+            
+            if i % 10 == 0:  # Print progress every 10 seconds
+                print(f"Still waiting for container... ({i+1}/{max_retries})")
+            time.sleep(1)
+        
+        # Get final logs before failing
+        logs = subprocess.run(
+            ["docker", "logs", cls.container_id],
+            capture_output=True, text=True, check=False
+        )
+        print(f"Final container logs:\n{logs.stdout}\n{logs.stderr}")
         raise Exception("Container failed to start")
     
     @classmethod
@@ -66,7 +93,7 @@ class TestLambdaContainer(unittest.TestCase):
             print(f"\nStopping container {cls.container_id[:12]}...")
             try:
                 subprocess.run(["docker", "stop", cls.container_id], 
-                             timeout=10, check=False)
+                             check=False, timeout=10)
                 print("Container stopped successfully")
             except subprocess.TimeoutExpired:
                 print("Timeout stopping container, forcing kill...")
