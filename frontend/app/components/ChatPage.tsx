@@ -24,6 +24,8 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
   const [sessionName, setSessionName] = useState('')
   const [chatWithData, setChatWithData] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<any[]>([])
+  const [allFiles, setAllFiles] = useState<any[]>([])
+  const [showFileSelector, setShowFileSelector] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -52,10 +54,15 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
         console.log('💬 Formatted messages:', formattedMessages.length, 'messages')
         setMessages(formattedMessages)
         
-        // Load selected files for chat with data
-        const files = await apiService.getSelectedFiles(projectId)
-        console.log('📁 Selected files loaded:', files.length, 'files')
-        setSelectedFiles(files)
+        // Load all files and selected files
+        const [allFilesData, selectedFilesData] = await Promise.all([
+          apiService.getFiles(projectId),
+          apiService.getSelectedFiles(projectId)
+        ])
+        console.log('📁 All files loaded:', allFilesData.length, 'files')
+        console.log('📁 Selected files loaded:', selectedFilesData.length, 'files')
+        setAllFiles(allFilesData)
+        setSelectedFiles(selectedFilesData)
       } catch (error) {
         console.error('❌ Error loading session data:', error)
       }
@@ -115,6 +122,19 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
 
   const clearChat = () => {
     setMessages([])
+  }
+
+  const toggleFileSelection = async (fileId: string) => {
+    try {
+      const isSelected = selectedFiles.some(f => f.file_id === fileId)
+      await apiService.updateFileSelection(fileId, !isSelected)
+      
+      // Refresh selected files
+      const updatedSelectedFiles = await apiService.getSelectedFiles(projectId)
+      setSelectedFiles(updatedSelectedFiles)
+    } catch (error) {
+      console.error('Error updating file selection:', error)
+    }
   }
 
   return (
@@ -222,9 +242,19 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
                 />
               </button>
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {chatWithData ? `เปิดใช้งาน (${selectedFiles.length} ไฟล์)` : 'แชทธรรมดา'}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {chatWithData ? `เปิดใช้งาน (${selectedFiles.length} ไฟล์)` : 'แชทธรรมดา'}
+              </span>
+              {chatWithData && (
+                <button
+                  onClick={() => setShowFileSelector(true)}
+                  className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                >
+                  เลือกไฟล์
+                </button>
+              )}
+            </div>
           </div>
           
           <div className="flex space-x-2">
@@ -250,6 +280,58 @@ export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps
           </p>
         </div>
       </div>
+
+      {/* File Selector Modal */}
+      {showFileSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                เลือกไฟล์สำหรับแชท
+              </h3>
+              <button 
+                onClick={() => setShowFileSelector(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {allFiles.map((file) => {
+                const isSelected = selectedFiles.some(f => f.file_id === file.file_id)
+                return (
+                  <div key={file.file_id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleFileSelection(file.file_id)}
+                      className="w-4 h-4 text-blue-600 rounded"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {file.filename}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {file.file_type}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowFileSelector(false)}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                เสร็จ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

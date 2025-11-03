@@ -14,20 +14,18 @@ interface FileData {
 interface FileMetadata {
   file_id: string
   filename: string
-  file_type: string
-  rows?: number
+  size: number
+  name?: string
+  description?: string
   columns?: ColumnMetadata[]
-  preview?: Record<string, any>[]
 }
 
 interface ColumnMetadata {
-  name: string
+  column: string
   dtype: string
-  nullable: boolean
-  unique_values?: number
-  sample_values?: any[]
+  input_type: string
   description?: string
-  input_type?: string
+  summary?: string
 }
 
 interface FileManagerProps {
@@ -107,38 +105,13 @@ export default function FileManager({ projectId, files, onFilesUpdate }: FileMan
   }
 
   const loadFileMetadata = async (fileId: string) => {
-    const file = files.find(f => f.file_id === fileId)
-    if (!file) return
-
-    // Mock data - replace with real API call
-    const mockMetadata: FileMetadata = {
-      file_id: fileId,
-      filename: file.filename,
-      file_type: file.file_type,
-      rows: Math.floor(Math.random() * 10000) + 100,
-      columns: [
-        { 
-          name: "id", 
-          dtype: "int64", 
-          nullable: false, 
-          unique_values: 1000, 
-          sample_values: [1, 2, 3],
-          description: "รหัสประจำตัว",
-          input_type: "ID"
-        },
-        { 
-          name: "name", 
-          dtype: "object", 
-          nullable: true, 
-          unique_values: 800, 
-          sample_values: ["John", "Jane", "Bob"],
-          description: "ชื่อ",
-          input_type: "input"
-        }
-      ]
+    try {
+      const metadata = await apiService.getFileMetadata(fileId)
+      setFileMetadata(prev => ({ ...prev, [fileId]: metadata }))
+    } catch (error) {
+      console.error('Failed to load metadata:', error)
+      alert('ไม่สามารถโหลด metadata ได้')
     }
-    
-    setFileMetadata(prev => ({ ...prev, [fileId]: mockMetadata }))
   }
 
   const handleMetadataSave = (updatedMetadata: FileMetadata) => {

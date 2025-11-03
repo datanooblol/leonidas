@@ -17,8 +17,12 @@ interface FileData {
   project_id: string
   filename: string
   size: number
-  file_type: string
+  file_type?: string
+  status: string
+  source: string
+  selected: boolean
   created_at: string
+  updated_at: string
 }
 
 interface ColumnMetadata {
@@ -51,7 +55,6 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [files, setFiles] = useState<FileData[]>([])
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [fileMetadata, setFileMetadata] = useState<Record<string, FileMetadata>>({})
   const [showMetadata, setShowMetadata] = useState<string | null>(null)
@@ -90,94 +93,35 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
   }
 
   const loadFileMetadata = async (fileId: string) => {
-    const file = files.find(f => f.file_id === fileId)
-    if (!file) return
-
-    // Mock data - replace with real API call
-    const mockMetadata: FileMetadata = {
-      file_id: fileId,
-      filename: file.filename,
-      file_type: file.file_type,
-      rows: Math.floor(Math.random() * 10000) + 100,
-      columns: [
-        { 
-          name: "id", 
-          dtype: "int64", 
-          nullable: false, 
-          unique_values: 1000, 
-          sample_values: [1, 2, 3],
-          description: "รหัสประจำตัวผู้ใช้",
-          input_type: "ID"
-        },
-        { 
-          name: "name", 
-          dtype: "object", 
-          nullable: true, 
-          unique_values: 800, 
-          sample_values: ["John", "Jane", "Bob"],
-          description: "ชื่อผู้ใช้",
-          input_type: "input"
-        },
-        { 
-          name: "age", 
-          dtype: "int64", 
-          nullable: true, 
-          unique_values: 50, 
-          sample_values: [25, 30, 35],
-          description: "อายุ (ปี)",
-          input_type: "input"
-        },
-        { 
-          name: "salary", 
-          dtype: "float64", 
-          nullable: true, 
-          unique_values: 900, 
-          sample_values: [50000.0, 60000.0, 75000.0],
-          description: "เงินเดือน (บาท)",
-          input_type: "input"
-        },
-        { 
-          name: "temp_field", 
-          dtype: "object", 
-          nullable: true, 
-          unique_values: 2, 
-          sample_values: ["temp1", "temp2"],
-          description: "ฟิลด์ชั่วคราว",
-          input_type: "reject"
-        }
-      ],
-      preview: [
-        { id: 1, name: "John", age: 25, salary: 50000.0, temp_field: "temp1" },
-        { id: 2, name: "Jane", age: 30, salary: 60000.0, temp_field: "temp2" },
-        { id: 3, name: "Bob", age: 35, salary: 75000.0, temp_field: "temp1" },
-        { id: 4, name: "Alice", age: 28, salary: 55000.0, temp_field: "temp2" },
-        { id: 5, name: "Charlie", age: 32, salary: 70000.0, temp_field: "temp1" }
-      ]
+    try {
+      const metadata = await apiService.getFileMetadata(fileId)
+      setFileMetadata(prev => ({ ...prev, [fileId]: metadata }))
+    } catch (error) {
+      console.error('Failed to load metadata:', error)
     }
-    
-    setFileMetadata(prev => ({ ...prev, [fileId]: mockMetadata }))
   }
 
   const handleMetadataSave = (updatedMetadata: FileMetadata) => {
     setFileMetadata(prev => ({ ...prev, [updatedMetadata.file_id]: updatedMetadata }))
-    // TODO: Send to API
-    console.log('Updated metadata:', updatedMetadata)
   }
 
-  const toggleFileSelection = (fileId: string) => {
-    if (!chatWithData) return // ไม่สามารถเลือกไฟล์ได้เมื่อปิด Chat with Data
+  const toggleFileSelection = async (fileId: string) => {
+    if (!chatWithData) return
     
-    const file = files.find(f => f.file_id === fileId)
-    const newSelected = new Set(selectedFiles)
-    if (newSelected.has(fileId)) {
-      newSelected.delete(fileId)
-      console.log('❌ ยกเลิกเลือกไฟล์:', file?.filename)
-    } else {
-      newSelected.add(fileId)
-      console.log('✅ เลือกไฟล์:', file?.filename)
+    try {
+      const file = files.find(f => f.file_id === fileId)
+      const newSelected = !file?.selected
+      
+      await apiService.updateFileSelection(fileId, newSelected)
+      
+      setFiles(prev => prev.map(f => 
+        f.file_id === fileId ? { ...f, selected: newSelected } : f
+      ))
+      
+      console.log(newSelected ? '✅ เลือกไฟล์:' : '❌ ยกเลิกเลือกไฟล์:', file?.filename)
+    } catch (error) {
+      console.error('Error updating file selection:', error)
     }
-    setSelectedFiles(newSelected)
-    console.log('📁 ไฟล์ที่เลือกทั้งหมด:', Array.from(newSelected).map(id => files.find(f => f.file_id === id)?.filename))
   }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,13 +155,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
     setInput('')
     setIsLoading(true)
 
-    // Log selected files and message being sent
-    const selectedFileNames = Array.from(selectedFiles).map(id => files.find(f => f.file_id === id)?.filename)
-    console.log('🚀 ส่งข้อความไปยัง Backend:')
-    console.log('📝 ข้อความ:', messageContent)
-    console.log('📁 ไฟล์ที่เลือก:', selectedFileNames)
-    console.log('🆔 Session ID:', sessionId)
-    console.log('🆔 File IDs:', Array.from(selectedFiles))
+
 
     try {
       const response = await apiService.sendMessage(sessionId, messageContent, chatWithData)
@@ -255,12 +193,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
             <div className="flex items-center space-x-3">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Chat with Data</span>
               <button
-                onClick={() => {
-                  setChatWithData(!chatWithData)
-                  if (!chatWithData) {
-                    setSelectedFiles(new Set()) // ล้างการเลือกไฟล์เมื่อปิด
-                  }
-                }}
+                onClick={() => setChatWithData(!chatWithData)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                   chatWithData ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
                 }`}
@@ -296,10 +229,10 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
             </button>
           </div>
           
-          {selectedFiles.size > 0 && (
+          {files.filter(f => f.selected).length > 0 && (
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                เลือกแล้ว {selectedFiles.size} ไฟล์
+                เลือกแล้ว {files.filter(f => f.selected).length} ไฟล์
               </p>
             </div>
           )}
@@ -320,7 +253,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                   className={`p-3 rounded-lg border transition-all ${
                     !chatWithData
                       ? 'border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50'
-                      : selectedFiles.has(file.file_id)
+                      : file.selected
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
                       : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
@@ -340,7 +273,7 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                       </p>
                     </div>
                     <div className="ml-2">
-                      {selectedFiles.has(file.file_id) ? (
+                      {file.selected ? (
                         <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                           <div className="w-2 h-2 bg-white rounded-full"></div>
                         </div>
@@ -412,8 +345,8 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {chatWithData 
-                  ? selectedFiles.size > 0 
-                    ? `ใช้ข้อมูลจาก ${selectedFiles.size} ไฟล์` 
+                  ? files.filter(f => f.selected).length > 0 
+                    ? `ใช้ข้อมูลจาก ${files.filter(f => f.selected).length} ไฟล์` 
                     : 'พร้อมช่วยวิเคราะห์ข้อมูล'
                   : 'โหมดแชทธรรมดา'
                 }

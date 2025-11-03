@@ -3,22 +3,20 @@
 import { useState } from 'react'
 
 interface ColumnMetadata {
-  name: string
+  column: string
   dtype: string
-  nullable: boolean
-  unique_values?: number
-  sample_values?: any[]
+  input_type: string
   description?: string
-  input_type?: string
+  summary?: string
 }
 
 interface FileMetadata {
   file_id: string
   filename: string
-  file_type: string
-  rows?: number
+  size: number
+  name?: string
+  description?: string
   columns?: ColumnMetadata[]
-  preview?: Record<string, any>[]
 }
 
 interface MetadataModalProps {
@@ -120,7 +118,7 @@ export default function MetadataModal({ metadata, onClose, onSave }: MetadataMod
                   {editingColumns.map((col, idx) => (
                     <tr key={idx} className="border-t border-gray-200 dark:border-gray-600">
                       <td className="px-4 py-3 border-r border-gray-200 dark:border-gray-600">
-                        <span className="font-medium">{col.name}</span>
+                        <span className="font-medium">{col.column}</span>
                       </td>
                       <td className="px-4 py-3 border-r border-gray-200 dark:border-gray-600">
                         <span className="font-mono text-sm bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
