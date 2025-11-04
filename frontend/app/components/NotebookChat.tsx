@@ -10,6 +10,7 @@ interface Message {
   content: string
   role: 'user' | 'assistant'
   timestamp: Date
+  artifacts?: any[]
 }
 
 interface FileData {
@@ -82,7 +83,8 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
         id: msg.message_id,
         content: msg.content,
         role: msg.role,
-        timestamp: new Date(msg.created_at)
+        timestamp: new Date(msg.created_at),
+        artifacts: msg.artifacts
       }))
       
       setMessages(formattedMessages)
@@ -159,12 +161,13 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
 
     try {
       const response = await apiService.sendMessage(sessionId, messageContent, chatWithData)
-      
+      console.log("response message:", response)
       const assistantMessage: Message = {
         id: response.id,
         content: response.content,
         role: 'assistant',
-        timestamp: new Date()
+        timestamp: new Date(),
+        artifacts: response.artifacts
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -379,7 +382,31 @@ export default function NotebookChat({ projectId, sessionId, onBack }: NotebookC
                   }`}
                 >
                   {message.role === 'assistant' ? (
-                    <MarkdownRenderer content={message.content} />
+                    <>
+                      <MarkdownRenderer content={message.content} />
+                      {message.artifacts && message.artifacts.length > 0 && (
+                        <div className="mt-2 space-y-2">
+                          {message.artifacts.map((artifact, idx) => (
+                            <details key={idx} className="border border-gray-200 dark:border-gray-600 rounded">
+                              <summary className="cursor-pointer p-2 bg-gray-50 dark:bg-gray-700 text-sm font-medium">
+                                {artifact.type === 'sql' ? '🗄️ SQL Query' : `📊 ${artifact.type || 'Artifact'}`}
+                              </summary>
+                              <div className="p-2">
+                                {artifact.type === 'sql' ? (
+                                  <pre className="text-xs bg-gray-900 text-green-400 p-3 rounded overflow-x-auto">
+                                    <code>{artifact.content}</code>
+                                  </pre>
+                                ) : (
+                                  <pre className="text-xs whitespace-pre-wrap overflow-x-auto">
+                                    {JSON.stringify(artifact, null, 2)}
+                                  </pre>
+                                )}
+                              </div>
+                            </details>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   )}
