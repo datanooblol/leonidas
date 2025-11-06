@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ProjectPage } from '../../../src/components/pages/ProjectPage'
+import { NewProjectPage } from '../../../src/components/pages/NewProjectPage'
 import { Spinner } from '../../../src/components/atoms/Spinner'
 import { apiService } from '../../../lib/api'
 
@@ -75,5 +75,5 @@ export default function ProjectDetail() {
     )
   }
 
-  return <ProjectPage project={project} onBack={handleBack} />
+  return <NewProjectPage project={project} onBack={handleBack} />
 }
