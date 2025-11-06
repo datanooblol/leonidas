@@ -29,6 +29,9 @@ export default function ProjectDetail() {
       return
     }
 
+    // Set token to apiService
+    apiService.setAuthToken(token)
+
     loadProject()
   }, [projectId, router])
 

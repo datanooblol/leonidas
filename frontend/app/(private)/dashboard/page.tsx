@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { HomePage } from '../../src/components/pages/HomePage'
+import { apiService } from '../../lib/api'
 
 export default function Dashboard() {
   const [userEmail, setUserEmail] = useState('')
@@ -14,6 +15,9 @@ export default function Dashboard() {
       router.push('/login')
       return
     }
+    
+    // Set token to apiService
+    apiService.setAuthToken(token)
     
     const email = localStorage.getItem('user_email') || 'user@example.com'
     setUserEmail(email)
