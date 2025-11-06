@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { apiService } from '../lib/api'
-import MarkdownRenderer from './MarkdownRenderer'
+import MarkdownRenderer from '../backup/MarkdownRenderer'
 
 export default function TestPage() {
   const [email, setEmail] = useState('user@example.com')

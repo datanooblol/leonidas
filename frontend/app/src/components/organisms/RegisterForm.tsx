@@ -2,34 +2,27 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { InputField } from '../molecules/InputField'
-import { AuthButtons } from '../molecules/AuthButtons'
+import { RegisterButtons } from '../molecules/RegisterButtons'
 import { ErrorMessage } from '../atoms/ErrorMessage'
 import { apiService } from '../../../lib/api'
 
-interface AuthFormProps {
-  onSwitchToRegister?: () => void
-}
-
-export const AuthForm = ({ onSwitchToRegister }: AuthFormProps) => {
+export const RegisterForm = ({ onSwitchToLogin }: { onSwitchToLogin: () => void }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
 
-  const handleAuth = async (isLogin: boolean) => {
+  const handleRegister = async () => {
     setIsLoading(true)
     setError('')
 
     try {
-      const response = isLogin 
-        ? await apiService.login(email, password)
-        : await apiService.register(email, password)
-      
+      const response = await apiService.register(email, password)
       localStorage.setItem('access_token', response.access_token)
       router.push('/dashboard')
     } catch (error) {
-      setError(isLogin ? 'เข้าสู่ระบบไม่สำเร็จ' : 'สมัครสมาชิกไม่สำเร็จ')
+      setError('สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่')
     } finally {
       setIsLoading(false)
     }
@@ -55,9 +48,9 @@ export const AuthForm = ({ onSwitchToRegister }: AuthFormProps) => {
 
       <ErrorMessage message={error} />
       
-      <AuthButtons
-        onLogin={() => handleAuth(true)}
-        onRegister={onSwitchToRegister || (() => handleAuth(false))}
+      <RegisterButtons
+        onRegister={handleRegister}
+        onSwitchToLogin={onSwitchToLogin}
         isLoading={isLoading}
       />
     </div>

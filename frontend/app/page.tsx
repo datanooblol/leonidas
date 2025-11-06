@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import LoginForm from './components/LoginForm'
-import RegisterForm from './components/RegisterForm'
+import RegisterForm from './backup/RegisterForm'
 import HomePage from './components/HomePage'
 import ProjectDashboard from './components/ProjectDashboard'
 import TestPage from './components/TestPage'
 import { apiService } from './lib/api'
-import MarkdownRenderer from './components/MarkdownRenderer'
+import MarkdownRenderer from './backup/MarkdownRenderer'
 
 type AppState = 'login' | 'register' | 'home' | 'project' | 'test'
 

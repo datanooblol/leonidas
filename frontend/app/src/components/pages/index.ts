@@ -1,1 +1,5 @@
 export { LoginPage } from './LoginPage'
+export { HomePage } from './HomePage'
+export { ProjectPage } from './ProjectPage'
+export { ChatPage } from './ChatPage'
+export { RegisterPage } from './RegisterPage'

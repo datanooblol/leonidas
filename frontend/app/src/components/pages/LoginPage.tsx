@@ -2,8 +2,12 @@
 import { AuthTemplate } from '../templates/AuthTemplate'
 import { AuthForm } from '../organisms/AuthForm'
 
-export const LoginPage = () => (
+interface LoginPageProps {
+  onSwitchToRegister?: () => void
+}
+
+export const LoginPage = ({ onSwitchToRegister }: LoginPageProps) => (
   <AuthTemplate title="Leonidas Project">
-    <AuthForm />
+    <AuthForm onSwitchToRegister={onSwitchToRegister} />
   </AuthTemplate>
 )

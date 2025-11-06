@@ -1,1 +1,4 @@
 export { AuthTemplate } from './AuthTemplate'
+export { DashboardTemplate } from './DashboardTemplate'
+export { ProjectTemplate } from './ProjectTemplate'
+export { ChatTemplate } from './ChatTemplate'
