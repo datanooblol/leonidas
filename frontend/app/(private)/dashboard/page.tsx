@@ -35,7 +35,7 @@ export default function Dashboard() {
   }
 
   if (isLoading) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">Loading...</div>
+    return <div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>
   }
 
   return (

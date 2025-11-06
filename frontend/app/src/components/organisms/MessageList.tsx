@@ -25,7 +25,7 @@ export const MessageList = ({ messages, isLoading, chatWithData }: MessageListPr
   }, [messages])
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
       {messages.length === 0 ? (
         <EmptyChat chatWithData={chatWithData} />
       ) : (
@@ -36,7 +36,7 @@ export const MessageList = ({ messages, isLoading, chatWithData }: MessageListPr
       
       {isLoading && (
         <div className="flex justify-start">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
             <LoadingDots />
           </div>
         </div>

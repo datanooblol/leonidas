@@ -50,7 +50,7 @@ export const ChatArea = ({
       chatWithData={chatWithData}
     />
 
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+    <div className="border-t border-gray-200 bg-gray-100 p-4">
       <ChatInput
         value={input}
         onChange={onInputChange}

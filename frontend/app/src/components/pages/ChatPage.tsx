@@ -73,7 +73,7 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
       }))
       
       setMessages(formattedMessages)
-      setFiles(filesData)
+      setFiles(filesData as FileData[])
     } catch (error) {
       console.error('Error loading data:', error)
     }
@@ -180,25 +180,25 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
       {/* Preview Modal */}
       {showPreview && fileMetadata[showPreview] && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-5xl max-h-[80vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 max-w-5xl max-h-[80vh] overflow-y-auto border border-gray-300">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-gray-900">
                 ตัวอย่างข้อมูล: {fileMetadata[showPreview].filename}
               </h3>
               <button 
                 onClick={() => setShowPreview(null)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-600 hover:text-gray-800"
               >
                 ✕
               </button>
             </div>
             
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm border border-gray-200 dark:border-gray-600">
+              <table className="min-w-full text-sm border border-gray-300">
                 <thead>
-                  <tr className="bg-gray-100 dark:bg-gray-700">
+                  <tr className="bg-gray-100">
                     {fileMetadata[showPreview].columns?.map((col: any) => (
-                      <th key={col.name} className="px-3 py-2 text-left font-medium border-r border-gray-200 dark:border-gray-600">
+                      <th key={col.name} className="px-3 py-2 text-left font-medium border-r border-gray-300">
                         {col.name}
                       </th>
                     ))}
@@ -206,9 +206,9 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
                 </thead>
                 <tbody>
                   {fileMetadata[showPreview].preview?.slice(0, 10).map((row, idx) => (
-                    <tr key={idx} className="border-t border-gray-200 dark:border-gray-600">
+                    <tr key={idx} className="border-t border-gray-300">
                       {fileMetadata[showPreview].columns?.map((col: any) => (
-                        <td key={col.name} className="px-3 py-2 border-r border-gray-200 dark:border-gray-600">
+                        <td key={col.name} className="px-3 py-2 border-r border-gray-300">
                           {row[col.name]?.toString() || '-'}
                         </td>
                       ))}

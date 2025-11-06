@@ -7,12 +7,12 @@ interface ToggleProps {
 
 export const Toggle = ({ enabled, onChange, label, disabled = false }: ToggleProps) => (
   <div className="flex items-center space-x-3">
-    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
+    <span className="text-sm font-medium text-gray-900">{label}</span>
     <button
       onClick={() => !disabled && onChange(!enabled)}
       disabled={disabled}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-        enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
+        enabled ? 'bg-gray-600' : 'bg-gray-200'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       <span

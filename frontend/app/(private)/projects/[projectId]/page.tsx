@@ -53,7 +53,7 @@ export default function ProjectDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Spinner text="กำลังโหลดโปรเจค..." />
       </div>
     )
@@ -61,12 +61,12 @@ export default function ProjectDetail() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">ไม่พบโปรเจค</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">ไม่พบโปรเจค</h2>
           <button 
             onClick={handleBack}
-            className="text-blue-600 hover:text-blue-500"
+            className="text-gray-600 hover:text-blue-500"
           >
             กลับไปหน้าหลัก
           </button>

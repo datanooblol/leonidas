@@ -34,8 +34,8 @@ export const SessionItem = ({
   <div
     className={`p-3 border rounded-lg transition-colors ${
       isSelected
-        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-        : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+        ? 'border-blue-500 bg-blue-50'
+        : 'border-gray-200 hover:bg-gray-50'
     }`}
   >
     {isEditing ? (
@@ -48,10 +48,10 @@ export const SessionItem = ({
     ) : (
       <div className="flex justify-between items-start">
         <div onClick={onSelect} className="flex-1 cursor-pointer">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-900">
             {session.name}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500">
             {new Date(session.created_at).toLocaleDateString('th-TH')}
           </p>
         </div>

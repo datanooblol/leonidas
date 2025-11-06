@@ -14,12 +14,12 @@ export const ProjectLayoutTemplate = ({
   rightPanel,
   onBack
 }: ProjectLayoutTemplateProps) => (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+  <div className="min-h-screen bg-white flex flex-col">
     <Navbar projectName={projectName} onBack={onBack} />
     
     <div className="flex-1 flex">
       {/* Left Panel - 200px fixed width */}
-      <div className="w-[200px] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4">
+      <div className="w-[200px] bg-gray-100 border-r border-gray-300 p-4">
         {leftPanel}
       </div>
       

@@ -14,5 +14,5 @@ export default function RootPage() {
     }
   }, [router])
   
-  return <div>กำลังโหลด...</div>
+  return <div className="min-h-screen bg-white flex items-center justify-center">กำลังโหลด...</div>
 }

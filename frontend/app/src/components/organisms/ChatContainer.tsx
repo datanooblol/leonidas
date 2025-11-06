@@ -28,7 +28,7 @@ export const ChatContainer = ({
 }: ChatContainerProps) => {
   if (!sessionId) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 flex items-center justify-center bg-white">
         <div className="text-center">
           <div className="text-6xl mb-4">💬</div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">

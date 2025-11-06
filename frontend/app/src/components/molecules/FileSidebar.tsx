@@ -36,21 +36,21 @@ export const FileSidebar = ({
   const selectedCount = files.filter(f => f.selected).length
 
   return (
-    <div className={`${isOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+    <div className={`${isOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden bg-gray-100 border-r border-gray-300`}>
+      <div className="p-4 border-b border-gray-300">
         <div className="flex items-center justify-between mb-4">
           <Toggle
             enabled={chatWithData}
             onChange={onToggleChatWithData}
             label="Chat with Data"
           />
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-600">
             {chatWithData ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
           </span>
         </div>
         
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">เอกสารแหล่งข้อมูล</h2>
+          <h2 className="text-lg font-semibold text-gray-900">เอกสารแหล่งข้อมูล</h2>
           <input
             ref={fileInputRef}
             type="file"
@@ -61,7 +61,7 @@ export const FileSidebar = ({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg"
+            className="p-2 text-gray-800 hover:bg-gray-200 rounded-lg"
             title="อัปโหลดไฟล์"
           >
             📁
@@ -75,7 +75,7 @@ export const FileSidebar = ({
 
       <div className="flex-1 overflow-y-auto p-4">
         {files.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-8 text-gray-600">
             <div className="text-3xl mb-2">📄</div>
             <p className="text-sm">ยังไม่มีเอกสาร</p>
             <p className="text-xs mt-1">คลิก 📁 เพื่ออัปโหลด</p>

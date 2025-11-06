@@ -4,7 +4,7 @@ interface ChatTemplateProps {
 }
 
 export const ChatTemplate = ({ sidebar, chatArea }: ChatTemplateProps) => (
-  <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+  <div className="flex h-screen bg-white">
     {sidebar}
     {chatArea}
   </div>

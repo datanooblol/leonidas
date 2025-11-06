@@ -1,5 +1,4 @@
-import { ProjectCard } from '../molecules/ProjectCard'
-import { EmptyState } from '../molecules/EmptyState'
+import { Card } from '../atoms/Card'
 
 interface Project {
   project_id: string
@@ -13,20 +12,16 @@ interface ProjectGridProps {
   onSelectProject: (projectId: string, project: Project) => void
 }
 
-export const ProjectGrid = ({ projects, onSelectProject }: ProjectGridProps) => {
-  if (projects.length === 0) {
-    return <EmptyState />
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {projects.map((project) => (
-        <ProjectCard
-          key={project.project_id}
-          project={project}
-          onSelect={onSelectProject}
-        />
-      ))}
-    </div>
-  )
-}
+export const ProjectGrid = ({ projects, onSelectProject }: ProjectGridProps) => (
+  <div className="grid grid-cols-3 gap-6">
+    {projects.map((project) => (
+      <Card 
+        key={project.project_id}
+        onClick={() => onSelectProject(project.project_id, project)}
+        className="h-24 flex items-center justify-center border"
+      >
+        <span>{project.name}</span>
+      </Card>
+    ))}
+  </div>
+)

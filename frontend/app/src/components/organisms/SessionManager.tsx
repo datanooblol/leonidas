@@ -94,7 +94,8 @@ export const SessionManager = ({
         <Heading level={3}>Chat Sessions</Heading>
         <Button
           onClick={() => setShowCreateForm(true)}
-          className="px-3 py-2 text-sm w-auto bg-green-500 hover:bg-green-600"
+          className="px-3 py-2 text-sm w-auto"
+          variant="primary"
         >
           + Session ใหม่
         </Button>
@@ -109,7 +110,7 @@ export const SessionManager = ({
       )}
 
       {sessions.length === 0 ? (
-        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-6 text-gray-600">
           <div className="text-2xl mb-2">💬</div>
           <p className="text-sm">ยังไม่มี session</p>
         </div>

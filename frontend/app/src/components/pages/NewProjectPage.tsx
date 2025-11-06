@@ -93,8 +93,7 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
         id: msg.message_id,
         content: msg.content,
         role: msg.role,
-        timestamp: new Date(msg.created_at),
-        artifacts: msg.artifacts
+        timestamp: new Date(msg.created_at)
       }))
       
       setMessages(formattedMessages)

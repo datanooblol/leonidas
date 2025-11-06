@@ -17,8 +17,8 @@ export const ChatMessage = ({ message }: ChatMessageProps) => (
     <div
       className={`max-w-3xl px-4 py-3 rounded-lg ${
         message.role === 'user'
-          ? 'bg-blue-500 text-white'
-          : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
+          ? 'bg-gray-800 text-white'
+          : 'bg-white text-gray-900 border border-gray-300'
       }`}
     >
       {message.role === 'assistant' ? (
@@ -51,7 +51,7 @@ export const ChatMessage = ({ message }: ChatMessageProps) => (
         <p className="whitespace-pre-wrap">{message.content}</p>
       )}
       <p className={`text-xs mt-2 ${
-        message.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+        message.role === 'user' ? 'text-gray-200' : 'text-gray-600'
       }`}>
         {message.timestamp.toLocaleTimeString('th-TH', { 
           hour: '2-digit', 

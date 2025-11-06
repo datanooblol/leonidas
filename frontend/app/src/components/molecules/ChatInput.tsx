@@ -20,7 +20,7 @@ export const ChatInput = ({ value, onChange, onSend, placeholder, disabled = fal
         }
       }}
       placeholder={placeholder}
-      className="flex-1 resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+      className="flex-1 resize-none border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
       rows={1}
       disabled={disabled}
     />

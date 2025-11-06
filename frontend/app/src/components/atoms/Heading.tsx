@@ -4,7 +4,7 @@ interface HeadingProps {
 }
 
 export const Heading = ({ children, className = '' }: HeadingProps) => (
-  <h2 className={`text-3xl font-bold text-gray-900 dark:text-white ${className}`}>
+  <h2 className={`text-3xl font-bold text-gray-900 ${className}`}>
     {children}
   </h2>
 )

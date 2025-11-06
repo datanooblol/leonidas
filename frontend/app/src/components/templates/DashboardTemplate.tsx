@@ -7,7 +7,7 @@ interface DashboardTemplateProps {
 }
 
 export const DashboardTemplate = ({ userEmail, onLogout, children }: DashboardTemplateProps) => (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div className="min-h-screen bg-white">
     <DashboardHeader userEmail={userEmail} onLogout={onLogout} />
     {children}
   </div>

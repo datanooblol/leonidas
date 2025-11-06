@@ -51,7 +51,7 @@ export const HomePage = ({ userEmail, onSelectProject, onLogout }: HomePageProps
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Spinner />
       </div>
     )
