@@ -16,7 +16,7 @@ export const CodeBlock = ({ children }: CodeBlockProps) => {
 
   return (
     <div className="relative group">
-      <pre className="bg-gray-100 dark:bg-gray-700 p-3 rounded overflow-x-auto pr-12">
+      <pre className="bg-gray-50 p-3 rounded overflow-x-auto pr-12">
         {children}
       </pre>
       <CopyButton

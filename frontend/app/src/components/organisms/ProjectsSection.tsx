@@ -15,16 +15,29 @@ interface ProjectsSectionProps {
   projects: Project[]
   onSelectProject: (projectId: string, project: Project) => void
   onCreateProject: (name: string, description: string) => Promise<boolean>
+  onUpdateProject?: (projectId: string, name: string, description: string) => Promise<boolean>
+  onDeleteProject?: (projectId: string) => Promise<boolean>
 }
 
-export const ProjectsSection = ({ projects, onSelectProject, onCreateProject }: ProjectsSectionProps) => {
+export const ProjectsSection = ({ 
+  projects, 
+  onSelectProject, 
+  onCreateProject,
+  onUpdateProject,
+  onDeleteProject
+}: ProjectsSectionProps) => {
   const [showCreateForm, setShowCreateForm] = useState(false)
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <h2 className="text-xl mb-6">My Projects</h2>
       
-      <ProjectGrid projects={projects} onSelectProject={onSelectProject} />
+      <ProjectGrid 
+        projects={projects} 
+        onSelectProject={onSelectProject}
+        onUpdateProject={onUpdateProject}
+        onDeleteProject={onDeleteProject}
+      />
       
       <button 
         onClick={() => setShowCreateForm(true)}

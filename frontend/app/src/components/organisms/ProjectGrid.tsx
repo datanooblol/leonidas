@@ -1,4 +1,4 @@
-import { Card } from '../atoms/Card'
+import { ProjectCard } from '../molecules/ProjectCard'
 
 interface Project {
   project_id: string
@@ -10,18 +10,25 @@ interface Project {
 interface ProjectGridProps {
   projects: Project[]
   onSelectProject: (projectId: string, project: Project) => void
+  onUpdateProject?: (projectId: string, name: string, description: string) => Promise<boolean>
+  onDeleteProject?: (projectId: string) => Promise<boolean>
 }
 
-export const ProjectGrid = ({ projects, onSelectProject }: ProjectGridProps) => (
-  <div className="grid grid-cols-3 gap-6">
+export const ProjectGrid = ({ 
+  projects, 
+  onSelectProject,
+  onUpdateProject,
+  onDeleteProject
+}: ProjectGridProps) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {projects.map((project) => (
-      <Card 
+      <ProjectCard
         key={project.project_id}
-        onClick={() => onSelectProject(project.project_id, project)}
-        className="h-24 flex items-center justify-center border"
-      >
-        <span>{project.name}</span>
-      </Card>
+        project={project}
+        onSelect={onSelectProject}
+        onUpdateProject={onUpdateProject}
+        onDeleteProject={onDeleteProject}
+      />
     ))}
   </div>
 )

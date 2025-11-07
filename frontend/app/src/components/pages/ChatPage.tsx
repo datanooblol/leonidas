@@ -24,7 +24,6 @@ interface FileData {
   source: string
   selected: boolean
   created_at: string
-  updated_at: string
 }
 
 interface FileMetadata {
@@ -68,12 +67,10 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
         id: msg.message_id,
         content: msg.content,
         role: msg.role,
-        timestamp: new Date(msg.created_at),
-        artifacts: msg.artifacts
-      }))
+        timestamp: new Date(msg.created_at)      }))
       
       setMessages(formattedMessages)
-      setFiles(filesData as FileData[])
+      setFiles(filesData)
     } catch (error) {
       console.error('Error loading data:', error)
     }

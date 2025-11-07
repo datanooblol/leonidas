@@ -1,12 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { ProjectLayoutTemplate } from '../templates/ProjectLayoutTemplate'
-import { ProjectInfo } from '../molecules/ProjectInfo'
-import { TabSwitcher } from '../molecules/TabSwitcher'
-import { FileManager } from '../organisms/FileManager'
-import { SessionManager } from '../organisms/SessionManager'
-import { ChatContainer } from '../organisms/ChatContainer'
-import { MetadataModal } from '../organisms/MetadataModal'
+import { ChatTemplate } from '../templates/ChatTemplate'
+import { ProjectChatSidebar } from '../organisms/ProjectChatSidebar'
+import { ChatArea } from '../organisms/ChatArea'
+import { UploadStatus } from '../molecules/UploadStatus'
+import { NewChatModal } from '../molecules/NewChatModal'
+import { FileMetadataModal } from '../organisms/FileMetadataModal'
 import { apiService } from '../../../lib/api'
 
 interface ProjectData {
@@ -42,21 +41,50 @@ interface Message {
   artifacts?: any[]
 }
 
+interface Column {
+  column: string
+  dtype: string
+  input_type: string
+  description: string | null
+  summary: string | null
+}
+
+interface FileMetadata {
+  file_id: string
+  project_id: string
+  filename: string
+  size: number
+  status: string
+  source: string
+  selected: boolean
+  created_at: string
+  updated_at: string
+  name: string
+  description: string
+  columns: Column[]
+}
+
 interface NewProjectPageProps {
   project: ProjectData
   onBack: () => void
 }
 
 export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
-  const [activeTab, setActiveTab] = useState<'files' | 'sessions'>('files')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  const [useFileData, setUseFileData] = useState(false)
   const [sessions, setSessions] = useState<SessionData[]>([])
   const [files, setFiles] = useState<FileData[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [showMetadata, setShowMetadata] = useState<string | null>(null)
-  const [fileMetadata, setFileMetadata] = useState<Record<string, any>>({})
+  const [isUploading, setIsUploading] = useState(false)
+  const [showUploadStatus, setShowUploadStatus] = useState(false)
+  const [showNewChatModal, setShowNewChatModal] = useState(false)
+  const [isCreatingChat, setIsCreatingChat] = useState(false)
+  const [showMetadataModal, setShowMetadataModal] = useState(false)
+  const [currentMetadata, setCurrentMetadata] = useState<FileMetadata | null>(null)
 
   useEffect(() => {
     loadProjectData()
@@ -69,6 +97,13 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
       setMessages([])
     }
   }, [currentSessionId])
+
+  // Clear selected files when useFileData is turned off
+  useEffect(() => {
+    if (!useFileData) {
+      setSelectedFiles([])
+    }
+  }, [useFileData])
 
   const loadProjectData = async () => {
     try {
@@ -102,6 +137,122 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
     }
   }
 
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed)
+  }
+
+  const handleFileSelect = (fileId: string) => {
+    if (!useFileData) return
+    
+    setSelectedFiles(prev => 
+      prev.includes(fileId) 
+        ? prev.filter(id => id !== fileId)
+        : [...prev, fileId]
+    )
+  }
+
+  const handleToggleFileData = () => {
+    setUseFileData(!useFileData)
+  }
+
+  const handleFileUpload = async (fileList: FileList) => {
+    setIsUploading(true)
+    
+    try {
+      const uploadPromises = Array.from(fileList).map(file => 
+        apiService.uploadFile(project.project_id, file)
+      )
+      
+      await Promise.all(uploadPromises)
+      
+      // Reload files after upload
+      const filesData = await apiService.getFiles(project.project_id)
+      setFiles(filesData)
+      
+      setShowUploadStatus(true)
+      setTimeout(() => setShowUploadStatus(false), 3000)
+      
+    } catch (error) {
+      console.error('Failed to upload files:', error)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleNewChat = () => {
+    setShowNewChatModal(true)
+  }
+
+  const handleCreateChat = async (chatName: string) => {
+    setIsCreatingChat(true)
+    
+    try {
+      const newSession = await apiService.createSession(project.project_id, chatName)
+      setSessions(prev => [newSession, ...prev])
+      setCurrentSessionId(newSession.session_id)
+      setMessages([])
+      setInput('')
+      setShowNewChatModal(false)
+    } catch (error) {
+      console.error('Failed to create session:', error)
+    } finally {
+      setIsCreatingChat(false)
+    }
+  }
+
+  const handleUpdateSession = async (sessionId: string, name: string) => {
+    try {
+      const updatedSession = await apiService.updateSession(sessionId, name)
+      setSessions(prev => prev.map(s => 
+        s.session_id === sessionId ? { ...s, name: updatedSession.name } : s
+      ))
+    } catch (error) {
+      console.error('Failed to update session:', error)
+    }
+  }
+
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      await apiService.deleteSession(sessionId)
+      setSessions(prev => prev.filter(s => s.session_id !== sessionId))
+      
+      // If deleting current session, clear it
+      if (currentSessionId === sessionId) {
+        setCurrentSessionId(null)
+        setMessages([])
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error)
+    }
+  }
+
+  const handleViewMetadata = async (fileId: string) => {
+    try {
+      const metadata = await apiService.getFileMetadata(fileId)
+      setCurrentMetadata(metadata)
+      setShowMetadataModal(true)
+    } catch (error) {
+      console.error('Failed to get metadata:', error)
+      alert('Failed to load file metadata')
+    }
+  }
+
+  const handleSaveMetadata = async (metadata: FileMetadata) => {
+    try {
+      await apiService.updateFileMetadata(metadata.file_id, metadata)
+      console.log('Metadata updated successfully')
+    } catch (error) {
+      console.error('Failed to update metadata:', error)
+      alert('Failed to save metadata')
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('user_email')
+    window.location.href = '/login'
+  }
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading || !currentSessionId) return
 
@@ -118,7 +269,7 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
     setIsLoading(true)
 
     try {
-      const response = await apiService.sendMessage(currentSessionId, messageContent, true)
+      const response = await apiService.sendMessage(currentSessionId, messageContent, useFileData)
       const assistantMessage: Message = {
         id: response.id,
         content: response.content,
@@ -139,69 +290,63 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
     setCurrentSessionId(sessionId)
   }
 
-  const handleMetadataView = (fileId: string) => {
-    setShowMetadata(fileId)
-  }
-
-  const loadFileMetadata = async (fileId: string) => {
-    try {
-      const metadata = await apiService.getFileMetadata(fileId)
-      setFileMetadata(prev => ({ ...prev, [fileId]: metadata }))
-    } catch (error) {
-      console.error('Failed to load metadata:', error)
-    }
-  }
-
-  const leftPanel = (
-    <>
-      <ProjectInfo project={project} />
-      <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      {activeTab === 'files' ? (
-        <FileManager
-          projectId={project.project_id}
-          files={files}
-          onFilesUpdate={setFiles}
-        />
-      ) : (
-        <SessionManager
-          projectId={project.project_id}
-          sessions={sessions}
-          currentSessionId={currentSessionId}
-          onSessionSelect={handleSessionSelect}
-          onSessionsUpdate={setSessions}
-        />
-      )}
-    </>
-  )
-
-  const rightPanel = (
-    <ChatContainer
-      messages={messages}
-      input={input}
-      isLoading={isLoading}
-      sessionId={currentSessionId}
-      onInputChange={setInput}
-      onSendMessage={sendMessage}
-    />
-  )
+  const userEmail = localStorage.getItem('user_email') || 'user@example.com'
 
   return (
     <>
-      <ProjectLayoutTemplate
-        projectName={project.name}
-        leftPanel={leftPanel}
-        rightPanel={rightPanel}
-        onBack={onBack}
+      <UploadStatus show={showUploadStatus} />
+      <NewChatModal
+        show={showNewChatModal}
+        onClose={() => setShowNewChatModal(false)}
+        onCreateChat={handleCreateChat}
+        isCreating={isCreatingChat}
       />
-
-      {showMetadata && fileMetadata[showMetadata] && (
-        <MetadataModal
-          metadata={fileMetadata[showMetadata]}
-          onClose={() => setShowMetadata(null)}
-          onSave={(metadata) => setFileMetadata(prev => ({ ...prev, [metadata.file_id]: metadata }))}
-        />
-      )}
+      <FileMetadataModal
+        metadata={currentMetadata}
+        onClose={() => {
+          setShowMetadataModal(false)
+          setCurrentMetadata(null)
+        }}
+        onSave={handleSaveMetadata}
+      />
+      <ChatTemplate
+        sidebar={
+          <ProjectChatSidebar
+            collapsed={sidebarCollapsed}
+            selectedFiles={selectedFiles}
+            files={files}
+            sessions={sessions}
+            currentSessionId={currentSessionId}
+            userEmail={userEmail}
+            isUploading={isUploading}
+            useFileData={useFileData}
+            onFileSelect={handleFileSelect}
+            onNewChat={handleNewChat}
+            onToggleSidebar={handleToggleSidebar}
+            onSessionSelect={handleSessionSelect}
+            onLogout={handleLogout}
+            onFileUpload={handleFileUpload}
+            onUpdateSession={handleUpdateSession}
+            onDeleteSession={handleDeleteSession}
+            onViewMetadata={handleViewMetadata}
+          />
+        }
+        chatArea={
+          <ChatArea
+            messages={messages}
+            input={input}
+            isLoading={isLoading}
+            currentSession={currentSessionId}
+            selectedFilesCount={selectedFiles.length}
+            useFileData={useFileData}
+            onInputChange={setInput}
+            onSendMessage={sendMessage}
+            onToggleSidebar={handleToggleSidebar}
+            onToggleFileData={handleToggleFileData}
+            onBack={onBack}
+          />
+        }
+      />
     </>
   )
 }

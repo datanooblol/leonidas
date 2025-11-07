@@ -49,6 +49,30 @@ export const HomePage = ({ userEmail, onSelectProject, onLogout }: HomePageProps
     }
   }
 
+  const handleUpdateProject = async (projectId: string, name: string, description: string) => {
+    try {
+      const updatedProject = await apiService.updateProject(projectId, name, description)
+      setProjects(prev => prev.map(p => 
+        p.project_id === projectId ? updatedProject : p
+      ))
+      return true
+    } catch (error) {
+      console.error('Failed to update project:', error)
+      return false
+    }
+  }
+
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      await apiService.deleteProject(projectId)
+      setProjects(prev => prev.filter(p => p.project_id !== projectId))
+      return true
+    } catch (error) {
+      console.error('Failed to delete project:', error)
+      return false
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -63,6 +87,8 @@ export const HomePage = ({ userEmail, onSelectProject, onLogout }: HomePageProps
         projects={projects}
         onSelectProject={onSelectProject}
         onCreateProject={handleCreateProject}
+        onUpdateProject={handleUpdateProject}
+        onDeleteProject={handleDeleteProject}
       />
     </DashboardTemplate>
   )

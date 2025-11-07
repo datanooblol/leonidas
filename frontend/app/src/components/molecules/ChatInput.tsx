@@ -6,30 +6,64 @@ interface ChatInputProps {
   onSend: () => void
   placeholder: string
   disabled?: boolean
+  useFileData?: boolean
+  onToggleFileData?: () => void
+  selectedFilesCount?: number
 }
 
-export const ChatInput = ({ value, onChange, onSend, placeholder, disabled = false }: ChatInputProps) => (
-  <div className="flex space-x-3">
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onKeyPress={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault()
-          onSend()
-        }
-      }}
-      placeholder={placeholder}
-      className="flex-1 resize-none border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-      rows={1}
-      disabled={disabled}
-    />
-    <Button
-      onClick={onSend}
-      disabled={!value.trim() || disabled}
-      className="w-auto px-6 py-3"
-    >
-      ส่ง
-    </Button>
+export const ChatInput = ({ 
+  value, 
+  onChange, 
+  onSend, 
+  placeholder, 
+  disabled = false,
+  useFileData = false,
+  onToggleFileData,
+  selectedFilesCount = 0
+}: ChatInputProps) => (
+  <div className="space-y-2">
+    {/* Chat Input */}
+    <div className="flex items-center space-x-2">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyPress={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            onSend()
+          }
+        }}
+        placeholder={placeholder}
+        className="flex-1 resize-none border-0 rounded-lg px-3 py-2 focus:outline-none bg-transparent text-sm h-9 overflow-hidden"
+        rows={1}
+        disabled={disabled}
+      />
+      <button
+        onClick={onSend}
+        disabled={!value.trim() || disabled}
+        className="w-8 h-8 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 rounded-full flex items-center justify-center text-white text-sm transition-colors"
+      >
+        ➤
+      </button>
+    </div>
+    
+    {/* File Data Switch */}
+    {onToggleFileData && (
+      <div className="flex items-center space-x-2 text-xs text-gray-500">
+        <span>ใช้ข้อมูลจากไฟล์</span>
+        <button
+          onClick={onToggleFileData}
+          className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+            useFileData ? 'bg-green-500' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+              useFileData ? 'translate-x-3.5' : 'translate-x-0.5'
+            }`}
+          />
+        </button>
+      </div>
+    )}
   </div>
 )
