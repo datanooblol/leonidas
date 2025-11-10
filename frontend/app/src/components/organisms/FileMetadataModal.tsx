@@ -49,7 +49,6 @@ export const FileMetadataModal = ({ metadata, onClose, onSave }: FileMetadataMod
       await apiService.updateFileMetadata(editedMetadata.file_id, editedMetadata)
       onSave(editedMetadata)
       setIsEditing(false)
-      onClose()
     } catch (error) {
       console.error('Failed to save metadata:', error)
       alert('Failed to save metadata')
@@ -154,7 +153,11 @@ export const FileMetadataModal = ({ metadata, onClose, onSave }: FileMetadataMod
                             <option value="ID">ID</option>
                           </select>
                         ) : (
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            col.input_type === 'ID' ? 'bg-gray-100 text-gray-800' :
+                            col.input_type === 'REJECT' ? 'bg-red-100 text-red-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
                             {col.input_type || 'INPUT'}
                           </span>
                         )}

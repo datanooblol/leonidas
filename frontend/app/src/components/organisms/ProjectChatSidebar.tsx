@@ -7,6 +7,7 @@ interface FileData {
   filename: string
   size: number
   file_type: string
+  selected?: boolean
 }
 
 interface SessionData {
@@ -75,6 +76,8 @@ export const ProjectChatSidebar = ({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+
 
   // Freeze all scrolling when session menu is open
   useEffect(() => {
@@ -173,22 +176,40 @@ export const ProjectChatSidebar = ({
                 files.map(file => (
                   <div
                     key={file.file_id}
-                    className={`flex items-center space-x-2 p-2 rounded group ${useFileData
+                    className={`flex items-center space-x-2 p-2 rounded group cursor-pointer ${useFileData
                       ? 'hover:bg-gray-100'
                       : 'opacity-50 cursor-not-allowed'
                       }`}
+                    onClick={async () => {
+                      if (!useFileData) return
+                      
+                      console.log('File container clicked for:', file.filename, 'ID:', file.file_id)
+                      
+                      const isCurrentlySelected = file.selected || false
+                      const newSelected = !isCurrentlySelected
+                      
+                      console.log('Will send to API:')
+                      console.log(`PATCH /files/${file.file_id}/selection?selected=${newSelected}`)
+                      
+                      try {
+                        const { apiService } = await import('../../../lib/api')
+                        await apiService.updateFileSelection(file.file_id, newSelected)
+                        console.log('✅ API call successful')
+                      } catch (error) {
+                        console.error('❌ API call failed:', error)
+                      }
+                      
+                      onFileSelect(file.file_id)
+                    }}
                   >
                     <input
                       type="checkbox"
-                      checked={selectedFiles.includes(file.file_id)}
-                      onChange={() => useFileData && onFileSelect(file.file_id)}
+                      checked={file.selected || false}
+                      onChange={() => {}} // Empty handler since parent div handles the click
                       disabled={!useFileData}
-                      className="w-4 h-4 accent-gray-500"
+                      className="w-4 h-4 accent-gray-500 pointer-events-none"
                     />
-                    <span 
-                      className="text-sm flex-1 cursor-pointer"
-                      onClick={() => useFileData && onFileSelect(file.file_id)}
-                    >
+                    <span className="text-sm flex-1">
                       {file.filename}
                     </span>
                     <button

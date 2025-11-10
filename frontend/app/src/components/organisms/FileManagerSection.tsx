@@ -8,7 +8,7 @@ interface FileData {
   file_type?: string
   status: string
   source: string
-  selected: boolean
+  selected?: boolean
   created_at: string
   updated_at: string
 }
@@ -41,17 +41,34 @@ export const FileManagerSection = ({
       for (const file of Array.from(uploadedFiles)) {
         await apiService.uploadFile(projectId, file)
       }
-      const updatedFiles = await apiService.getFiles(projectId)
-      onFilesUpdate(updatedFiles)
+      const filesData = await apiService.getFiles(projectId)
+      
+      // Map API response to component interface
+      const formattedFiles: FileData[] = filesData.map(file => ({
+        file_id: file.file_id,
+        project_id: file.project_id,
+        filename: file.filename,
+        size: file.file_size, // Map file_size to size
+        file_type: file.file_type,
+        status: 'active',
+        source: 'upload',
+        selected: file.selected || false, // Use value from API
+        created_at: file.created_at,
+        updated_at: file.created_at
+      }))
+      
+      onFilesUpdate(formattedFiles)
     } catch (error) {
       console.error('Upload failed:', error)
     }
   }
-
+  
   const handleToggleFileSelection = async (fileId: string) => {
     if (!chatWithData) return
     
     try {
+      console.log("This is before hendleToggleFile")
+
       const { apiService } = await import('../../../lib/api')
       const file = files.find(f => f.file_id === fileId)
       const newSelected = !file?.selected

@@ -31,6 +31,7 @@ interface FileData {
   size: number
   file_type: string
   created_at: string
+  selected?: boolean
 }
 
 interface Message {
@@ -102,8 +103,15 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
   useEffect(() => {
     if (!useFileData) {
       setSelectedFiles([])
+      setFiles(prev => prev.map(file => ({ ...file, selected: false })))
     }
   }, [useFileData])
+
+  // Sync selectedFiles with files selected property
+  useEffect(() => {
+    const selectedIds = files.filter(file => file.selected).map(file => file.file_id)
+    setSelectedFiles(selectedIds)
+  }, [files])
 
   const loadProjectData = async () => {
     try {
@@ -113,7 +121,12 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
       ])
       
       setSessions(sessionsData)
-      setFiles(filesData)
+      // Use selected property from API response
+      const filesWithSelection = filesData.map(file => ({
+        ...file,
+        selected: file.selected === true // Ensure boolean value
+      }))
+      setFiles(filesWithSelection)
     } catch (error) {
       console.error('Failed to load project data:', error)
     }
@@ -141,14 +154,25 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
     setSidebarCollapsed(!sidebarCollapsed)
   }
 
-  const handleFileSelect = (fileId: string) => {
+  const handleFileSelect = async (fileId: string) => {
     if (!useFileData) return
     
-    setSelectedFiles(prev => 
-      prev.includes(fileId) 
-        ? prev.filter(id => id !== fileId)
-        : [...prev, fileId]
-    )
+    const file = files.find(f => f.file_id === fileId)
+    if (!file) return
+    
+    const newSelected = !file.selected
+    
+    try {
+      await apiService.updateFileSelection(fileId, newSelected)
+      
+      setFiles(prev => prev.map(f => 
+        f.file_id === fileId 
+          ? { ...f, selected: newSelected }
+          : f
+      ))
+    } catch (error) {
+      console.error('Failed to update file selection:', error)
+    }
   }
 
   const handleToggleFileData = () => {
@@ -167,7 +191,11 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
       
       // Reload files after upload
       const filesData = await apiService.getFiles(project.project_id)
-      setFiles(filesData)
+      const filesWithSelection = filesData.map(file => ({
+        ...file,
+        selected: file.selected === true // Ensure boolean value
+      }))
+      setFiles(filesWithSelection)
       
       setShowUploadStatus(true)
       setTimeout(() => setShowUploadStatus(false), 3000)

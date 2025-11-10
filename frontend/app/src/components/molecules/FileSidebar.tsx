@@ -8,7 +8,7 @@ interface FileData {
   filename: string
   size: number
   file_type?: string
-  selected: boolean
+  selected?: boolean
 }
 
 interface FileSidebarProps {
@@ -33,7 +33,7 @@ export const FileSidebar = ({
   onViewPreview
 }: FileSidebarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const selectedCount = files.filter(f => f.selected).length
+  const selectedCount = files.filter(f => f.selected || false).length
 
   return (
     <div className={`${isOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden bg-gray-100 border-r border-gray-300`}>
