@@ -118,6 +118,55 @@ const PlotlyRenderer = ({ plotlyCode }: { plotlyCode: string }) => {
   )
 }
 
+const IframeWithAdjustment = ({ htmlContent }: { htmlContent: string }) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  const adjustIframeContent = () => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+
+    try {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+      const body = iframeDoc?.body
+      
+      if (body) {
+        const iframeHeight = 500 // ขนาดความสูงของ iframe
+        const style = iframeDoc.createElement('style')
+        style.textContent = `
+          body { 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            overflow: hidden !important;
+            height: 100% !important;
+            border: 5px solid green !important;
+            box-sizing: border-box !important;
+          }
+          html { height: 100% !important; }
+          .plotly-graph-div, div[style*="height:100%"] { 
+            width: 100% !important; 
+            height: ${iframeHeight - 10}px !important;
+            max-height: ${iframeHeight - 10}px !important;
+          }
+        `
+        iframeDoc.head.appendChild(style)
+      }
+    } catch (error) {
+      console.error('Cannot access iframe content:', error)
+    }
+  }
+
+  return (
+    <iframe
+      ref={iframeRef}
+      srcDoc={htmlContent}
+      className="w-full border-2 border-red-500"
+      style={{ height: '500px'  }}
+      title="Plotly HTML Chart"
+      onLoad={adjustIframeContent}
+    />
+  )
+}
+
 export const ChatArea = ({
   messages,
   input,
@@ -363,13 +412,10 @@ Plotly.newPlot(div, data, layout, {responsive: true});`
                     )}
                     {expandedArtifacts.has(`${message.id}-test-2`) && (
                       <div className="mt-2 bg-white border border-gray-200 rounded p-4">
-                        <iframe
-                          srcDoc={mockMessages[2].artifacts[0].content}
-                          className="w-full h-96 border-0"
-                          title="Plotly HTML Chart"
-                        />
+                        <IframeWithAdjustment htmlContent={mockMessages[2].artifacts[0].content} />
                       </div>
                     )}
+
 
                     {/* Artifacts */}
                     {message.artifacts && message.artifacts.length > 0 && (
@@ -431,11 +477,7 @@ Plotly.newPlot(div, data, layout, {responsive: true});`
 
                                 {isExpanded && (
                                   <div className="mt-2 bg-white border border-gray-200 rounded p-4">
-                                    <iframe
-                                      srcDoc={artifact.content}
-                                      className="w-full h-96 border-0"
-                                      title="Plotly HTML Chart"
-                                    />
+                                    <IframeWithAdjustment htmlContent={artifact.content} />
                                   </div>
                                 )}
                               </div>
