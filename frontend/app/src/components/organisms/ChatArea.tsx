@@ -1,6 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChatInput } from '../molecules/ChatInput'
 import { MarkdownRenderer } from './MarkdownRenderer'
+import React from 'react'
+
+declare global {
+  interface Window {
+    d3: any;
+  }
+}
 
 interface Message {
   id: string
@@ -24,6 +31,52 @@ interface ChatAreaProps {
   onBack: () => void
 }
 
+const D3Renderer = ({ d3Code }: { d3Code: string }) => {
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  useEffect(() => {
+    if (!svgRef.current || !d3Code) return
+
+    // Load D3 if not available
+    if (!window.d3) {
+      const script = document.createElement('script')
+      script.src = 'https://d3js.org/d3.v7.min.js'
+      script.onload = () => executeD3Code()
+      document.head.appendChild(script)
+    } else {
+      executeD3Code()
+    }
+
+    function executeD3Code() {
+      try {
+        const svg = window.d3.select(svgRef.current)
+        svg.selectAll('*').remove()
+
+        // Decode HTML entities
+        const decodedCode = d3Code
+          .replace(/&gt;/g, '>')
+          .replace(/&lt;/g, '<')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&')
+
+        // Execute D3 code
+        const func = new Function('d3', 'svg', 'width', 'height', decodedCode)
+        func(window.d3, svg, 400, 300)
+      } catch (error) {
+        console.error('D3 execution error:', error)
+        
+      }
+    }
+  }, [d3Code])
+
+  return (
+    <div className="w-full p-4">
+      <svg ref={svgRef} width="400" height="300" className="border border-gray-200 rounded"></svg>
+    </div>
+  )
+}
+
 export const ChatArea = ({
   messages,
   input,
@@ -38,6 +91,48 @@ export const ChatArea = ({
   onBack
 }: ChatAreaProps) => {
   const [expandedArtifacts, setExpandedArtifacts] = useState<Set<string>>(new Set())
+
+  // Mock messages for testing
+  const mockMessages = [
+    {
+      id: '1',
+      content: 'นี่คือกราฟแสดงยอดขายผลไม้',
+      role: 'assistant' as const,
+      timestamp: new Date(),
+      artifacts: [
+        {
+          type: 'd3',
+          content: `const data = [10, 15, 7, 12, 9];
+const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+const labels = ['แอปเปิ้ล', 'ส้ม', 'กล้วย', 'องุ่น', 'สตรอเบอรี่'];
+
+svg.selectAll('rect')
+  .data(data)
+  .enter()
+  .append('rect')
+  .attr('x', (d, i) => i * 70 + 30)
+  .attr('y', d => height - 50 - d * 8)
+  .attr('width', 50)
+  .attr('height', d => d * 8)
+  .attr('fill', (d, i) => colors[i])
+  .attr('rx', 4);
+
+svg.selectAll('text')
+  .data(labels)
+  .enter()
+  .append('text')
+  .attr('x', (d, i) => i * 70 + 55)
+  .attr('y', height - 20)
+  .attr('text-anchor', 'middle')
+  .attr('font-size', '12px')
+  .text(d => d);`
+        }
+      ]
+    }
+  ]
+
+  // Use mock messages if no real messages
+  const displayMessages = messages.length > 0 ? messages : mockMessages
 
   const toggleArtifact = (messageId: string, artifactIndex: number) => {
     const key = `${messageId}-${artifactIndex}`
@@ -65,6 +160,22 @@ export const ChatArea = ({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 pb-32">
+        {/* Test Chart Button - Always Show */}
+        <div className="mb-4">
+          <button
+            onClick={() => toggleArtifact('test', 0)}
+            className="px-3 py-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
+          >
+            📊 Test Chart {expandedArtifacts.has('test-0') ? '▼' : '▶'}
+          </button>
+          
+          {expandedArtifacts.has('test-0') && (
+            <div className="mt-2 bg-white border border-gray-200 rounded p-4">
+              <D3Renderer d3Code={mockMessages[0].artifacts[0].content} />
+            </div>
+          )}
+        </div>
+        
         {!currentSession ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -75,7 +186,7 @@ export const ChatArea = ({
           </div>
         ) : (
           <div className="space-y-4 max-w-3xl mx-auto">
-            {messages.map(message => (
+            {displayMessages.map(message => (
               <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {message.role === 'user' ? (
                   <div className="max-w-xs lg:max-w-2xl px-4 py-2 rounded-lg bg-gray-200 text-gray-800">
@@ -85,17 +196,51 @@ export const ChatArea = ({
                   <div className="w-full">
                     <MarkdownRenderer content={message.content} />
                     
-                    {/* SQL Artifacts */}
-                    {message.artifacts && message.artifacts.some(artifact => 
-                      artifact.type === 'sql' || artifact.language === 'sql'
-                    ) && (
-                      <div className="mt-2">
-                        {message.artifacts
-                          .filter(artifact => artifact.type === 'sql' || artifact.language === 'sql')
-                          .map((artifact, index) => {
-                            const key = `${message.id}-${index}`
-                            const isExpanded = expandedArtifacts.has(key)
-                            
+                    {/* Test Chart Button for Every Message */}
+                    <div className="mt-2">
+                      <button
+                        onClick={() => toggleArtifact(message.id, 999)}
+                        className="px-2 py-1 text-xs bg-green-100 text-green-600 rounded hover:bg-green-200 transition-colors mb-2"
+                      >
+                        📊 Test Chart {expandedArtifacts.has(`${message.id}-999`) ? '▼' : '▶'}
+                      </button>
+                      
+                      {expandedArtifacts.has(`${message.id}-999`) && (
+                        <div className="mt-2 bg-white border border-gray-200 rounded p-4">
+                          <D3Renderer d3Code={mockMessages[0].artifacts[0].content} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Artifacts */}
+                    {message.artifacts && message.artifacts.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        {message.artifacts.map((artifact, index) => {
+                          const key = `${message.id}-${index}`
+                          const isExpanded = expandedArtifacts.has(key)
+                          
+                          // D3 Chart Artifacts
+                          if (artifact.type === 'd3') {
+                            return (
+                              <div key={index} className="w-full">
+                                <button
+                                  onClick={() => toggleArtifact(message.id, index)}
+                                  className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors mb-2"
+                                >
+                                  📊 Interactive Chart {isExpanded ? '▼' : '▶'}
+                                </button>
+                                
+                                {isExpanded && (
+                                  <div className="mt-2 bg-white border border-gray-200 rounded p-4">
+                                    <D3Renderer d3Code={artifact.content} />
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }
+                          
+                          // SQL Artifacts
+                          if (artifact.type === 'sql' || artifact.language === 'sql') {
                             return (
                               <div key={index} className="inline-block">
                                 <button
@@ -114,8 +259,10 @@ export const ChatArea = ({
                                 )}
                               </div>
                             )
-                          })
-                        }
+                          }
+                          
+                          return null
+                        })}
                       </div>
                     )}
                   </div>
