@@ -57,11 +57,8 @@ export const ChatArea = ({
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <button onClick={onToggleSidebar} className="text-gray-600 hover:text-gray-800">
-            ☰
-          </button>
           <button onClick={onBack} className="text-gray-600 hover:text-gray-800">
-            ← Dashboard
+            🏠 Dashboard
           </button>
         </div>
       </div>
@@ -73,11 +70,11 @@ export const ChatArea = ({
             <div className="text-center">
               <div className="text-6xl mb-4">💬</div>
               <h3 className="text-lg font-medium mb-2">เริ่มการสนทนาใหม่</h3>
-              <p className="text-gray-500">เลือกไฟล์และเริ่มถามคำถามเกี่ยวกับข้อมูล</p>
+              <p className="text-gray-500">Data is power, questions are keys</p>
             </div>
           </div>
         ) : (
-          <div className="space-y-4 max-w-4xl mx-auto">
+          <div className="space-y-4 max-w-3xl mx-auto">
             {messages.map(message => (
               <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {message.role === 'user' ? (
@@ -85,7 +82,7 @@ export const ChatArea = ({
                     {message.content}
                   </div>
                 ) : (
-                  <div className="max-w-xs lg:max-w-2xl">
+                  <div className="w-full">
                     <MarkdownRenderer content={message.content} />
                     
                     {/* SQL Artifacts */}
@@ -138,7 +135,7 @@ export const ChatArea = ({
       {/* Floating Input Area */}
       {currentSession && (
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <div className="bg-white border border-gray-300 rounded-2xl shadow-lg p-4">
               <ChatInput
                 value={input}

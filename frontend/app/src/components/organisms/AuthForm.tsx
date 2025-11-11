@@ -27,6 +27,7 @@ export const AuthForm = ({ onSwitchToRegister }: AuthFormProps) => {
         : await apiService.register(email, password)
       
       localStorage.setItem('access_token', response.access_token)
+      localStorage.setItem('user_email', email)
       router.push('/dashboard')
     } catch (error) {
       setError(isLogin ? 'เข้าสู่ระบบไม่สำเร็จ' : 'สมัครสมาชิกไม่สำเร็จ')

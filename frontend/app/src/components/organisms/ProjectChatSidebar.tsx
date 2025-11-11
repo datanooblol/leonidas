@@ -138,15 +138,40 @@ export const ProjectChatSidebar = ({
   }
 
   return (
-    <div className={`bg-gray-50 border-r border-gray-200 transition-all duration-300 ${collapsed ? 'w-16' : 'w-80'
+    <div className={`bg-gray-50 border-r border-gray-200 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'
       } relative h-full`}>
-      {!collapsed && (
+      {collapsed ? (
+        <div className="p-4 space-y-2">
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded w-full flex justify-center"
+          >
+            ☰
+          </button>
+          <button
+            onClick={onNewChat}
+            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded w-full flex justify-center"
+            title="New Chat"
+          >
+            ✏️
+          </button>
+        </div>
+      ) : (
         <div className="p-4 space-y-4 h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={onToggleSidebar}
+              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded"
+            >
+              ☰
+            </button>
+          </div>
+          
           <button
             onClick={onNewChat}
             className="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-200 rounded transition-colors"
           >
-            + New Chat
+            ✏️ New Chat
           </button>
 
           <input
@@ -162,12 +187,12 @@ export const ProjectChatSidebar = ({
             disabled={isUploading}
             className="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-200 rounded transition-colors disabled:opacity-50"
           >
-            {isUploading ? 'กำลังอัปโหลด...' : 'Upload Files'}
+            {isUploading ? 'กำลังอัปโหลด...' : '📂 Upload Files'}
           </button>
 
           <div className="border-t pt-4">
             <h3 className="font-medium mb-2">📂 Files</h3>
-            <div className="space-y-2">
+            <div className="max-h-24 overflow-y-auto space-y-2">
               {files.length === 0 ? (
                 <div className="text-sm text-gray-500 text-center py-4">
                   No files
@@ -227,7 +252,7 @@ export const ProjectChatSidebar = ({
 
           <div className="border-t pt-4">
             <h3 className="font-medium mb-2">💬 Chat History</h3>
-            <div className="max-h-40 overflow-y-auto space-y-1">
+            <div className="max-h-24 overflow-y-auto space-y-1">
               {sessions.length === 0 ? (
                 <div className="text-sm text-gray-500 text-center py-4">
                   No chat sessions

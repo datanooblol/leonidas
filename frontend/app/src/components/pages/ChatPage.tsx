@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { ChatTemplate } from '../templates/ChatTemplate'
 import { ChatArea } from '../organisms/ChatArea'
-import { FileManagerSection } from '../organisms/FileManagerSection'
+import { ProjectChatSidebar } from '../organisms/ProjectChatSidebar'
 import { MetadataModal } from '../organisms/MetadataModal'
 import { apiService } from '../../../lib/api'
 
@@ -138,15 +138,22 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
     <>
       <ChatTemplate
         sidebar={
-          <FileManagerSection
-            isOpen={sidebarOpen}
-            files={files}
-            chatWithData={chatWithData}
-            projectId={projectId}
-            onToggleChatWithData={setChatWithData}
-            onFilesUpdate={setFiles}
+          <ProjectChatSidebar
+            collapsed={!sidebarOpen}
+            selectedFiles={files.filter(f => f.selected).map(f => f.file_id)}
+            files={files.map(f => ({ ...f, size: f.size || 0 }))}
+            sessions={[]}
+            currentSessionId={sessionId}
+            userEmail="user@example.com"
+            isUploading={false}
+            useFileData={chatWithData}
+            onFileSelect={() => {}}
+            onNewChat={() => {}}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            onSessionSelect={() => {}}
+            onLogout={() => {}}
+            onFileUpload={() => {}}
             onViewMetadata={handleViewMetadata}
-            onViewPreview={handleViewPreview}
           />
         }
         chatArea={
@@ -154,12 +161,13 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
             messages={messages}
             input={input}
             isLoading={isLoading}
-            sidebarOpen={sidebarOpen}
-            chatWithData={chatWithData}
+            currentSession={sessionId}
             selectedFilesCount={selectedFilesCount}
+            useFileData={chatWithData}
             onInputChange={setInput}
             onSendMessage={sendMessage}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            onToggleFileData={setChatWithData}
             onBack={onBack}
           />
         }

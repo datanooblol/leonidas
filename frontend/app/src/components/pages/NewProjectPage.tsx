@@ -318,7 +318,7 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
     setCurrentSessionId(sessionId)
   }
 
-  const userEmail = localStorage.getItem('user_email') || 'user@example.com'
+  const userEmail = localStorage.getItem('user_email') 
 
   return (
     <>
