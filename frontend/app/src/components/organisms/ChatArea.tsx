@@ -6,6 +6,7 @@ import React from 'react'
 declare global {
   interface Window {
     d3: any;
+    Plotly: any;
   }
 }
 
@@ -60,19 +61,59 @@ const D3Renderer = ({ d3Code }: { d3Code: string }) => {
           .replace(/&#39;/g, "'")
           .replace(/&amp;/g, '&')
 
-        // Execute D3 code
+        // Execute D3 code with dynamic width
+        const containerWidth = svgRef.current?.clientWidth || 800
         const func = new Function('d3', 'svg', 'width', 'height', decodedCode)
-        func(window.d3, svg, 400, 300)
+        func(window.d3, svg, containerWidth - 32, 400)
       } catch (error) {
         console.error('D3 execution error:', error)
-        
+
       }
     }
   }, [d3Code])
 
   return (
     <div className="w-full p-4">
-      <svg ref={svgRef} width="400" height="300" className="border border-gray-200 rounded"></svg>
+      <svg ref={svgRef} width="100%" height="400" className="border border-gray-200 rounded"></svg>
+    </div>
+  )
+}
+
+const PlotlyRenderer = ({ plotlyCode }: { plotlyCode: string }) => {
+  const divRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!divRef.current || !plotlyCode) return
+
+    if (!window.Plotly) {
+      const script = document.createElement('script')
+      script.src = 'https://cdn.plot.ly/plotly-latest.min.js'
+      script.onload = () => executePlotlyCode()
+      document.head.appendChild(script)
+    } else {
+      executePlotlyCode()
+    }
+
+    function executePlotlyCode() {
+      try {
+        const decodedCode = plotlyCode
+          .replace(/&gt;/g, '>')
+          .replace(/&lt;/g, '<')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&')
+
+        const func = new Function('Plotly', 'div', decodedCode)
+        func(window.Plotly, divRef.current)
+      } catch (error) {
+        console.error('Plotly execution error:', error)
+      }
+    }
+  }, [plotlyCode])
+
+  return (
+    <div className="w-full p-4">
+      <div ref={divRef} style={{ width: '100%', height: '400px' }} className="border border-gray-200 rounded"></div>
     </div>
   )
 }
@@ -106,26 +147,129 @@ export const ChatArea = ({
 const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
 const labels = ['แอปเปิ้ล', 'ส้ม', 'กล้วย', 'องุ่น', 'สตรอเบอรี่'];
 
-svg.selectAll('rect')
+const margin = {top: 20, right: 30, bottom: 60, left: 40};
+const chartWidth = width - margin.left - margin.right;
+const chartHeight = height - margin.top - margin.bottom;
+
+// สร้าง scales
+const xScale = d3.scaleBand()
+  .domain(labels)
+  .range([0, chartWidth])
+  .padding(0.1);
+
+const yScale = d3.scaleLinear()
+  .domain([0, d3.max(data)])
+  .range([chartHeight, 0]);
+
+// สร้าง main group
+const g = svg.append('g')
+  .attr('transform', \`translate(\${margin.left},\${margin.top})\`);
+
+// สร้าง tooltip
+const tooltip = d3.select('body')
+  .append('div')
+  .style('position', 'absolute')
+  .style('padding', '6px 10px')
+  .style('background', 'rgba(0,0,0,0.7)')
+  .style('color', '#fff')
+  .style('border-radius', '4px')
+  .style('pointer-events', 'none')
+  .style('opacity', 0);
+
+g.selectAll('rect')
   .data(data)
   .enter()
   .append('rect')
-  .attr('x', (d, i) => i * 70 + 30)
-  .attr('y', d => height - 50 - d * 8)
-  .attr('width', 50)
-  .attr('height', d => d * 8)
+  .attr('x', (d, i) => xScale(labels[i]))
+  .attr('y', d => yScale(d))
+  .attr('width', xScale.bandwidth())
+  .attr('height', d => chartHeight - yScale(d))
   .attr('fill', (d, i) => colors[i])
-  .attr('rx', 4);
+  .attr('rx', 4)
+  .on('mouseover', function(event, d) {
+    d3.select(this).attr('fill', '#FFD93D');
+    tooltip.transition().duration(200).style('opacity', 1);
+    tooltip.html(\`Value: \${d}\`)
+      .style('left', (event.pageX + 10) + 'px')
+      .style('top', (event.pageY - 25) + 'px');
+  })
+  .on('mousemove', function(event) {
+    tooltip
+      .style('left', (event.pageX + 10) + 'px')
+      .style('top', (event.pageY - 25) + 'px');
+  })
+  .on('mouseout', function(d, i) {
+    d3.select(this).attr('fill', (d, i) => colors[i]);
+    tooltip.transition().duration(200).style('opacity', 0);
+  })
+  .on('click', function(event, d) {
+    alert(\`You clicked on value: \${d}\`);
+  });
 
-svg.selectAll('text')
+g.selectAll('text')
   .data(labels)
   .enter()
   .append('text')
-  .attr('x', (d, i) => i * 70 + 55)
-  .attr('y', height - 20)
+  .attr('x', d => xScale(d) + xScale.bandwidth() / 2)
+  .attr('y', chartHeight + 20)
   .attr('text-anchor', 'middle')
   .attr('font-size', '12px')
   .text(d => d);`
+        }
+      ]
+    },
+    {
+      id: '2',
+      content: 'นี่คือกราฟ Plotly แสดงข้อมูลการขาย',
+      role: 'assistant' as const,
+      timestamp: new Date(),
+      artifacts: [
+        {
+          type: 'plotly',
+          content: `const data = [{
+  x: ['แอปเปิ้ล', 'ส้ม', 'กล้วย', 'องุ่น', 'สตรอเบอรี่'],
+  y: [10, 15, 7, 12, 9],
+  type: 'bar',
+  marker: {
+    color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']
+  }
+}];
+
+const layout = {
+  title: 'ยอดขายผลไม้',
+  xaxis: { title: 'ผลไม้' },
+  yaxis: { title: 'จำนวน' }
+};
+
+Plotly.newPlot(div, data, layout, {responsive: true});`
+        }
+      ]
+    },
+    {
+      id: '3',
+      content: 'นี่คือกราฟ HTML จาก API Response',
+      role: 'assistant' as const,
+      timestamp: new Date(),
+      artifacts: [
+        {
+          type: 'plotly-html',
+          content: `<html>
+
+<head>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+    <div>
+        <script type="text/javascript">window.PlotlyConfig = { MathJaxConfig: 'local' };</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.0.1.min.js"
+            integrity="sha256-oy6Be7Eh6eiQFs5M7oXuPxxm9qbJXEtTpfSI93dW16Q=" crossorigin="anonymous"></script>
+        <div id="4ce0f7b1-6965-48d8-a6f9-9f6e4929d444" class="plotly-graph-div" style="height:100%; width:100%;"></div>
+        <script type="text/javascript">                window.PLOTLYENV = window.PLOTLYENV || {}; if (document.getElementById("4ce0f7b1-6965-48d8-a6f9-9f6e4929d444")) { Plotly.newPlot("4ce0f7b1-6965-48d8-a6f9-9f6e4929d444", [{ "x": ["A", "B", "C"], "y": [10, 15, 7], "type": "bar" }], { "template": { "data": { "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }], "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }], "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }], "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }], "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }], "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }], "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }], "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }], "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }], "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "#E5ECF6", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }], "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }], "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }], "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f" }, "type": "carpet" }], "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }], "barpolar": [{ "marker": { "line": { "color": "#E5ECF6", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }], "pie": [{ "automargin": true, "type": "pie" }] }, "layout": { "autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": { "color": "#2a3f5f" }, "hovermode": "closest", "hoverlabel": { "align": "left" }, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": { "bgcolor": "#E5ECF6", "angularaxis": { "gridcolor": "white", "linecolor": "white", "ticks": "" }, "radialaxis": { "gridcolor": "white", "linecolor": "white", "ticks": "" } }, "ternary": { "bgcolor": "#E5ECF6", "aaxis": { "gridcolor": "white", "linecolor": "white", "ticks": "" }, "baxis": { "gridcolor": "white", "linecolor": "white", "ticks": "" }, "caxis": { "gridcolor": "white", "linecolor": "white", "ticks": "" } }, "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] }, "xaxis": { "gridcolor": "white", "linecolor": "white", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2 }, "yaxis": { "gridcolor": "white", "linecolor": "white", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2 }, "scene": { "xaxis": { "backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2 } }, "shapedefaults": { "line": { "color": "#2a3f5f" } }, "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 }, "geo": { "bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white" }, "title": { "x": 0.05 }, "mapbox": { "style": "light" } } } }, { "responsive": true }) };            </script>
+    </div>
+</body>
+
+</html>`
         }
       ]
     }
@@ -160,22 +304,8 @@ svg.selectAll('text')
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 pb-32">
-        {/* Test Chart Button - Always Show */}
-        <div className="mb-4">
-          <button
-            onClick={() => toggleArtifact('test', 0)}
-            className="px-3 py-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
-          >
-            📊 Test Chart {expandedArtifacts.has('test-0') ? '▼' : '▶'}
-          </button>
-          
-          {expandedArtifacts.has('test-0') && (
-            <div className="mt-2 bg-white border border-gray-200 rounded p-4">
-              <D3Renderer d3Code={mockMessages[0].artifacts[0].content} />
-            </div>
-          )}
-        </div>
-        
+
+
         {!currentSession ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -195,22 +325,51 @@ svg.selectAll('text')
                 ) : (
                   <div className="w-full">
                     <MarkdownRenderer content={message.content} />
-                    
-                    {/* Test Chart Button for Every Message */}
-                    <div className="mt-2">
+
+
+
+                    {/* Test Graph Buttons */}
+                    <div className="mt-2 space-x-2">
                       <button
-                        onClick={() => toggleArtifact(message.id, 999)}
-                        className="px-2 py-1 text-xs bg-green-100 text-green-600 rounded hover:bg-green-200 transition-colors mb-2"
+                        onClick={() => toggleArtifact(`${message.id}-test`, 0)}
+                        className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
                       >
-                        📊 Test Chart {expandedArtifacts.has(`${message.id}-999`) ? '▼' : '▶'}
+                        📊 Test D3 {expandedArtifacts.has(`${message.id}-test-0`) ? '▼' : '▶'}
                       </button>
-                      
-                      {expandedArtifacts.has(`${message.id}-999`) && (
-                        <div className="mt-2 bg-white border border-gray-200 rounded p-4">
-                          <D3Renderer d3Code={mockMessages[0].artifacts[0].content} />
-                        </div>
-                      )}
+                      <button
+                        onClick={() => toggleArtifact(`${message.id}-test`, 1)}
+                        className="px-2 py-1 text-xs bg-green-100 text-green-600 rounded hover:bg-green-200 transition-colors"
+                      >
+                        📈 Test Plotly {expandedArtifacts.has(`${message.id}-test-1`) ? '▼' : '▶'}
+                      </button>
+                      <button
+                        onClick={() => toggleArtifact(`${message.id}-test`, 2)}
+                        className="px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded hover:bg-purple-200 transition-colors"
+                      >
+                        🌐 Test HTML {expandedArtifacts.has(`${message.id}-test-2`) ? '▼' : '▶'}
+                      </button>
                     </div>
+
+                    {/* Test Charts */}
+                    {expandedArtifacts.has(`${message.id}-test-0`) && (
+                      <div className="mt-2 bg-white border border-gray-200 rounded p-4">
+                        <D3Renderer d3Code={mockMessages[0].artifacts[0].content} />
+                      </div>
+                    )}
+                    {expandedArtifacts.has(`${message.id}-test-1`) && (
+                      <div className="mt-2 bg-white border border-gray-200 rounded p-4">
+                        <PlotlyRenderer plotlyCode={mockMessages[1].artifacts[0].content} />
+                      </div>
+                    )}
+                    {expandedArtifacts.has(`${message.id}-test-2`) && (
+                      <div className="mt-2 bg-white border border-gray-200 rounded p-4">
+                        <iframe
+                          srcDoc={mockMessages[2].artifacts[0].content}
+                          className="w-full h-96 border-0"
+                          title="Plotly HTML Chart"
+                        />
+                      </div>
+                    )}
 
                     {/* Artifacts */}
                     {message.artifacts && message.artifacts.length > 0 && (
@@ -218,7 +377,7 @@ svg.selectAll('text')
                         {message.artifacts.map((artifact, index) => {
                           const key = `${message.id}-${index}`
                           const isExpanded = expandedArtifacts.has(key)
-                          
+
                           // D3 Chart Artifacts
                           if (artifact.type === 'd3') {
                             return (
@@ -227,9 +386,9 @@ svg.selectAll('text')
                                   onClick={() => toggleArtifact(message.id, index)}
                                   className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors mb-2"
                                 >
-                                  📊 Interactive Chart {isExpanded ? '▼' : '▶'}
+                                  📊 D3 Chart {isExpanded ? '▼' : '▶'}
                                 </button>
-                                
+
                                 {isExpanded && (
                                   <div className="mt-2 bg-white border border-gray-200 rounded p-4">
                                     <D3Renderer d3Code={artifact.content} />
@@ -238,7 +397,51 @@ svg.selectAll('text')
                               </div>
                             )
                           }
-                          
+
+                          // Plotly Chart Artifacts
+                          if (artifact.type === 'plotly') {
+                            return (
+                              <div key={index} className="w-full">
+                                <button
+                                  onClick={() => toggleArtifact(message.id, index)}
+                                  className="px-2 py-1 text-xs bg-green-100 text-green-600 rounded hover:bg-green-200 transition-colors mb-2"
+                                >
+                                  📈 Plotly Chart {isExpanded ? '▼' : '▶'}
+                                </button>
+
+                                {isExpanded && (
+                                  <div className="mt-2 bg-white border border-gray-200 rounded p-4">
+                                    <PlotlyRenderer plotlyCode={artifact.content} />
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }
+
+                          // Plotly HTML Artifacts
+                          if (artifact.type === 'plotly-html') {
+                            return (
+                              <div key={index} className="w-full">
+                                <button
+                                  onClick={() => toggleArtifact(message.id, index)}
+                                  className="px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded hover:bg-purple-200 transition-colors mb-2"
+                                >
+                                  🌐 HTML Chart {isExpanded ? '▼' : '▶'}
+                                </button>
+
+                                {isExpanded && (
+                                  <div className="mt-2 bg-white border border-gray-200 rounded p-4">
+                                    <iframe
+                                      srcDoc={artifact.content}
+                                      className="w-full h-96 border-0"
+                                      title="Plotly HTML Chart"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }
+
                           // SQL Artifacts
                           if (artifact.type === 'sql' || artifact.language === 'sql') {
                             return (
@@ -249,7 +452,7 @@ svg.selectAll('text')
                                 >
                                   SQL {isExpanded ? '▼' : '▶'}
                                 </button>
-                                
+
                                 {isExpanded && (
                                   <div className="mt-2 bg-gray-50 border border-gray-200 rounded p-2">
                                     <pre className="text-xs text-gray-700 overflow-x-auto">
@@ -260,7 +463,7 @@ svg.selectAll('text')
                               </div>
                             )
                           }
-                          
+
                           return null
                         })}
                       </div>
