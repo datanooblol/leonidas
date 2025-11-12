@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from package.core.dependencies import get_chat_service
 from package.services.chat_service import ChatService
 from package.core.auth_middleware import get_current_user
+from package.core.llm import ModelFactory
 from .interface import MessageSend, ChatResponse, ChatHistoryResponse
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -22,3 +23,9 @@ async def send_message(
     current_user: str = Depends(get_current_user)
 ):
     return await chat_service.send_message(session_id, current_user, message_data)
+
+@router.get("/available-models")
+async def get_available_models(
+    current_user: str = Depends(get_current_user)
+):
+    return dict(models=ModelFactory.get_available_models())

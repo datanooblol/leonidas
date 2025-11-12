@@ -9,6 +9,12 @@ import requests
 def bedrock_driver(messages):
     return [dict(role=m['role'], content=[dict(text=m['content'])]) for m in messages]
 
+# AVAILABLE_MODELS = dict(
+#     OPENAI_20b_BR = "openai.gpt-oss-20b-1:0",
+#     OPENAI_120b_BR = "openai.gpt-oss-120b-1:0",
+#     OPENAI_20b_LC = "gpt-oss:20b",
+# )
+
 class Role(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
@@ -104,3 +110,20 @@ class LocalOpenAI(BaseLLM):
         response = requests.post(self.endpoint_url, json=payload)
         response_time_ms = int((time.time() - start_time) * 1000)
         return self.OutputMessage(response.json(), response_time_ms=response_time_ms)
+
+class ModelFactory:
+    _model_registry = {
+        "OPENAI_20b_BR": lambda: BedrockOpenAI("openai.gpt-oss-20b-1:0"),
+        "OPENAI_120b_BR": lambda: BedrockOpenAI("openai.gpt-oss-120b-1:0"), 
+        "OPENAI_20b_LC": lambda: LocalOpenAI("gpt-oss:20b"),
+    }
+    
+    @classmethod
+    def create_model(cls, model_name: str) -> BaseLLM:
+        if model_name not in cls._model_registry:
+            raise ValueError(f"Model {model_name} not available")
+        return cls._model_registry[model_name]()
+    
+    @classmethod
+    def get_available_models(cls) -> list[str]:
+        return list(cls._model_registry.keys())
