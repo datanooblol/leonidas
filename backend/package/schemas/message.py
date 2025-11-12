@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from package.core.llm import Role
+from package.llms import Role
 
 class Message(BaseModel):
     message_id: str = Field(default_factory=lambda: str(uuid4()))

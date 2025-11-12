@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from package.core.dependencies import get_chat_service
 from package.services.chat_service import ChatService
 from package.core.auth_middleware import get_current_user
-from package.core.llm import ModelFactory
+from package.llms import ModelFactory
 from .interface import MessageSend, ChatResponse, ChatHistoryResponse
 
 router = APIRouter(prefix="/chat", tags=["chat"])

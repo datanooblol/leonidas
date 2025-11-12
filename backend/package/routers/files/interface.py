@@ -1,9 +1,21 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
-from .database import FileStatus, FileSource  # Import enums
+# from .database import FileStatus, FileSource  # Import enums
+from enum import StrEnum
 from datetime import datetime, timezone
 from package.core.interface import FieldDetail
+
+class FileStatus(StrEnum):
+    UPLOADING = "uploading"
+    COMPLETED = "completed"
+    PROCESSING = "processing"
+    FAILED = "failed"
+
+class FileSource(StrEnum):
+    USER_UPLOAD = "user_upload"
+    APP_GENERATED = "app_generated"
+
 class PresignedUrlResponse(BaseModel):
     url: str
     file_id: str

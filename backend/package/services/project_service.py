@@ -30,41 +30,6 @@ class ProjectService:
             updated_at=datetime.fromisoformat(created_project.updated_at)
         )
     
-    # async def get_user_projects(self, user_id: str) -> ProjectListResponse:
-    #     """Get all projects for a user"""
-    #     projects = await self.project_repo.get_by_user_id(user_id)
-        
-    #     project_responses = [
-    #         ProjectResponse(
-    #             project_id=project.project_id,
-    #             name=project.name,
-    #             description=project.description,
-    #             created_at=datetime.fromisoformat(project.created_at),
-    #             updated_at=datetime.fromisoformat(project.updated_at)
-    #         )
-    #         for project in projects
-    #     ]
-        
-    #     return ProjectListResponse(projects=project_responses)
-    
-    # async def get_user_projects(self, user_id: str) -> ProjectListResponse:
-    #     """Get all projects for a user with file counts"""
-    #     projects = await self.project_repo.get_by_user_id(user_id)
-        
-    #     project_responses = []
-    #     for project in projects:
-    #         file_count = await self.file_repo.count_by_project_id(project.project_id)
-    #         project_responses.append(ProjectResponse(
-    #             project_id=project.project_id,
-    #             name=project.name,
-    #             description=project.description,
-    #             created_at=datetime.fromisoformat(project.created_at),
-    #             updated_at=datetime.fromisoformat(project.updated_at),
-    #             file_count=file_count
-    #         ))
-        
-    #     return ProjectListResponse(projects=project_responses)
-
     async def get_user_projects(self, user_id: str) -> ProjectListResponse:
         """Get all projects for a user with file and session counts"""
         projects = await self.project_repo.get_by_user_id(user_id)

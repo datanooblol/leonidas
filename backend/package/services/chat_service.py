@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import HTTPException
 from package.core.repositories import MessageRepository, SessionRepository, ProjectRepository, FileRepository
-from package.core.llm import UserMessage, Role, ModelFactory
+from package.llms import UserMessage, Role, ModelFactory
 from package.core.config import settings
 from package.core.aws_config import get_aws_configs
 from package.core.data_catalog import DataCatalog

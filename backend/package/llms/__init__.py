@@ -1,5 +1,6 @@
 from .bedrock import *
 from .ollama import *
+from .base import *
 class ModelFactory:
     _model_registry = {
         "OPENAI_20b_BR": lambda: BedrockOpenAI("openai.gpt-oss-20b-1:0"),
