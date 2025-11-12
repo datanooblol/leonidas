@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from typing import List, Optional
 from package.core.repositories import MessageRepository, SessionRepository, ProjectRepository, FileRepository
 from package.schemas.message import Message
-from package.core.llm import BedrockOpenAI, LocalOpenAI, UserMessage, Role
+from package.core.llm import BedrockOpenAI, LocalOpenAI, UserMessage, Role, ModelFactory
 from package.core.config import settings
 from package.core.aws_config import get_aws_configs
 from package.core.data_catalog import DataCatalog
@@ -20,12 +20,6 @@ class ChatService:
         self.project_repo = project_repo
         self.file_repo = file_repo
         
-        # Initialize AI client
-        if settings.MODEL_PROVIDER == "local":
-            self.ai_client = LocalOpenAI()
-        else:
-            self.ai_client = BedrockOpenAI()
-    
     async def validate_session_access(self, session_id: str, user_id: str):
         """Validate user has access to session"""
         session = await self.session_repo.get_by_id(session_id)
@@ -59,10 +53,13 @@ class ChatService:
             session_id=session_id,
             messages=message_responses
         )
-    
+    # def ai_client(self, model_id:str):
+    #     return ModelFactory.create_model(model_name=model_id)
     async def send_message(self, session_id: str, user_id: str, message_data: MessageSend) -> ChatResponse:
         """Send message and get AI response"""
         session = await self.validate_session_access(session_id, user_id)
+        model_id = message_data.model_id
+        ai_client = ModelFactory.create_model(model_name=model_id)
         
         # Create user message record
         user_msg = await self.message_repo.create_user_message(session_id, user_id, message_data.content)
@@ -101,7 +98,7 @@ class ChatService:
                 sql_request_prompt = f"METADATAS:\n\n{metadatas_str}\n\nUSER QUERY:\n{message_data.content}"
                 
                 # Generate SQL query
-                sql_query = QueryMasterAgent(llm=self.ai_client).run(
+                sql_query = QueryMasterAgent(llm=ai_client).run(
                     conversation + [UserMessage(content=sql_request_prompt)]
                 )
                 
@@ -129,19 +126,19 @@ class ChatService:
                 
                 # Generate AI response with data context
                 result_prompt = f"CONTEXT:\n\n{results_markdown}\n\nUSER_INPUT:\n\n{message_data.content}\n\n"
-                model_response = self.ai_client.run(
+                model_response = ai_client.run(
                     PromptHub().chat_with_data, 
                     conversation + [UserMessage(content=result_prompt)]
                 )
             else:
                 # No selected files, use regular chat
-                model_response = self.ai_client.run(
+                model_response = ai_client.run(
                     PromptHub().chat_with_bro, 
                     conversation + [UserMessage(content=message_data.content)]
                 )
         else:
             # Regular chat without data context
-            model_response = self.ai_client.run(
+            model_response = ai_client.run(
                 PromptHub().chat_with_bro, 
                 conversation + [UserMessage(content=message_data.content)]
             )
