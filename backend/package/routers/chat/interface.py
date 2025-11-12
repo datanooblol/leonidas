@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List
-from package.core.llm import Role
+from package.llms import Role
 from typing import Optional, Any
 
 class MessageSend(BaseModel):

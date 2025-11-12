@@ -1,5 +1,5 @@
 from package.prompt_hub import PromptHub
-from package.core.llm import ModelResponse
+from package.llms import ModelResponse, BaseLLM
 from package.utils.parse_string import parse_sql
 
 class QueryMasterAgent:
@@ -7,7 +7,7 @@ class QueryMasterAgent:
     1. Generate SQL queries
     2. Get results from database
     """
-    def __init__(self, llm):
+    def __init__(self, llm:BaseLLM):
         self.llm = llm
 
     def run(self, messages:list) -> str:

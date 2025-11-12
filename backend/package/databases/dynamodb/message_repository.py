@@ -3,7 +3,7 @@ from typing import List, Optional, Any
 from package.core.config import settings
 from package.core.repositories import MessageRepository
 from package.schemas.message import Message
-from package.core.llm import Role
+from package.llms import Role
 
 class DynamoDBMessageRepository(MessageRepository[Message]):
     def __init__(self):

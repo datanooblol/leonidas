@@ -13,7 +13,7 @@ from package.routers.files.interface import FileResponse, FileListResponse
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
-@router.post("/", response_model=ProjectResponse)
+@router.post("", response_model=ProjectResponse)
 async def create_new_project(
     project_data: ProjectCreate,
     project_service: ProjectService = Depends(get_project_service),
@@ -21,7 +21,7 @@ async def create_new_project(
 ):
     return await project_service.create_project(current_user, project_data)
 
-@router.get("/", response_model=ProjectListResponse)
+@router.get("", response_model=ProjectListResponse)
 async def list_all_projects(
     project_service: ProjectService = Depends(get_project_service),
     current_user: str = Depends(get_current_user)
