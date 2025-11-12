@@ -253,3 +253,6 @@ class FileService:
             raise HTTPException(status_code=404, detail="File not found")
         
         return await self.file_repo.delete(file_id)
+
+    async def count_by_project_id(self, project_id:str) -> int:
+        return await self.file_repo.count_by_project_id(project_id)

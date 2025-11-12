@@ -96,3 +96,12 @@ class DynamoDBSessionRepository(SessionRepository[Session]):
         
         items = response.get('Responses', {}).get(settings.SESSIONS_TABLE, [])
         return [Session(**item) for item in items]
+
+    async def count_by_project_id(self, project_id: str) -> int:
+        response = self.table.query(
+            IndexName='ProjectIndex',
+            KeyConditionExpression='project_id = :project_id',
+            Select='COUNT',
+            ExpressionAttributeValues={':project_id': project_id}
+        )
+        return response.get('Count', 0)

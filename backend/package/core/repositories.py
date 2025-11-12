@@ -48,6 +48,10 @@ class SessionRepository(BaseRepository[T]):
     async def refresh_timestamp(self, session_id: str) -> Optional[T]:
         pass
 
+    @abstractmethod
+    async def count_by_project_id(self, project_id:str) -> Optional[T]:
+        pass
+    
 class FileRepository(BaseRepository[T]):
     @abstractmethod
     async def get_by_project_id(self, project_id: str, status: Optional[str] = None) -> List[T]:
@@ -71,6 +75,10 @@ class FileRepository(BaseRepository[T]):
     
     @abstractmethod
     async def confirm_upload(self, file_id: str, size: int) -> Optional[T]:
+        pass
+
+    @abstractmethod
+    async def count_by_project_id(self, project_id:str) -> Optional[T]:
         pass
 
 class MessageRepository(BaseRepository[T]):

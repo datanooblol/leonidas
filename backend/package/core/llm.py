@@ -9,12 +9,6 @@ import requests
 def bedrock_driver(messages):
     return [dict(role=m['role'], content=[dict(text=m['content'])]) for m in messages]
 
-# AVAILABLE_MODELS = dict(
-#     OPENAI_20b_BR = "openai.gpt-oss-20b-1:0",
-#     OPENAI_120b_BR = "openai.gpt-oss-120b-1:0",
-#     OPENAI_20b_LC = "gpt-oss:20b",
-# )
-
 class Role(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
@@ -35,6 +29,7 @@ def UserMessage(content:str)->dict:
 class BaseLLM(ABC):
     def __init__(self, model_id,):
         self.model_id = model_id
+        self.endpoint_url: str = "http://localhost:11434/api/chat"
     
     @abstractmethod
     def OutputMessage(self, response:dict, response_time_ms:int) -> ModelResponse:
@@ -67,6 +62,23 @@ class BaseBedrock(BaseLLM):
         response_time_ms = int((time.time() - start_time) * 1000)
         return self.OutputMessage(response, response_time_ms)
     
+class BedrockLLama(BaseBedrock):
+    def __init__(self, model_id):
+        super().__init__(model_id)
+    
+    def OutputMessage(self, response, response_time_ms)->ModelResponse:
+        proxy = response['output']['message']
+        usage = response['usage']
+        return ModelResponse(
+            model_name=self.model_id,
+            role=proxy['role'],
+            content=proxy['content'][0]['text'],
+            reason=proxy['content'][0]['text'],
+            input_tokens=usage['inputTokens'],
+            output_tokens=usage['outputTokens'],
+            response_time_ms=response_time_ms
+        )
+
 class BedrockOpenAI(BaseBedrock):
     def __init__(self, model_id="openai.gpt-oss-20b-1:0"):
         super().__init__(model_id)
@@ -83,22 +95,44 @@ class BedrockOpenAI(BaseBedrock):
             output_tokens=usage['outputTokens'],
             response_time_ms=response_time_ms
         )
-    
-class LocalOpenAI(BaseLLM):
-    def __init__(self, model_id="gpt-oss:20b"):
-        super().__init__(model_id=model_id)
-        self.endpoint_url: str = "http://localhost:11434/api/chat"
+
+class BedrockNova(BaseBedrock):
+    def __init__(self, model_id):
+        super().__init__(model_id)
 
     def OutputMessage(self, response, response_time_ms)->ModelResponse:
+        proxy = response['output']['message']
+        usage = response['usage']
         return ModelResponse(
-            model_name=response['model'],
-            role=response['message']['role'],
-            content=response['message']['content'],
-            reason=response['message']['thinking'],
-            input_tokens=0,
-            output_tokens=0,
+            model_name=self.model_id,
+            role=proxy['role'],
+            content=proxy['content'][0]['text'],
+            reason=proxy['content'][0]['text'],
+            input_tokens=usage['inputTokens'],
+            output_tokens=usage['outputTokens'],
             response_time_ms=response_time_ms
         )
+
+class BedrockClaude(BaseBedrock):
+    def __init__(self, model_id):
+        super().__init__(model_id)
+
+    def OutputMessage(self, response, response_time_ms):
+        proxy = response['output']['message']
+        usage = response['usage']
+        return ModelResponse(
+            model_name=self.model_id,
+            role=proxy['role'],
+            content=proxy['content'][0]['text'],
+            reason=proxy['content'][0]['text'],
+            input_tokens=usage['inputTokens'],
+            output_tokens=usage['outputTokens'],
+            response_time_ms=response_time_ms
+        )
+class BaseLocalLLM(BaseLLM):
+    def __init__(self, model_id):
+        super().__init__(model_id)
+        self.endpoint_url: str = "http://localhost:11434/api/chat"
 
     def run(self, system_prompt:str, messages:list)->ModelResponse:
         start_time = time.time()
@@ -111,11 +145,48 @@ class LocalOpenAI(BaseLLM):
         response_time_ms = int((time.time() - start_time) * 1000)
         return self.OutputMessage(response.json(), response_time_ms=response_time_ms)
 
+class OllamaOpenAI(BaseLocalLLM):
+    def __init__(self, model_id="gpt-oss:20b"):
+        super().__init__(model_id)
+
+    def OutputMessage(self, response, response_time_ms)->ModelResponse:
+        return ModelResponse(
+            model_name=self.model_id,
+            role=response['message']['role'],
+            content=response['message']['content'],
+            reason=response['message']['thinking'],
+            input_tokens=0,
+            output_tokens=0,
+            response_time_ms=response_time_ms
+        )
+
+class OllamaLlama(BaseLocalLLM):
+    def __init__(self, model_id):
+        super().__init__(model_id=model_id)
+    
+    def OutputMessage(self, response, response_time_ms)->ModelResponse:
+        proxy = response['message']
+        return ModelResponse(
+            model_name=self.model_id,
+            role=proxy['role'],
+            content=proxy['content'],
+            reason=proxy['content'],
+            input_tokens=0,
+            output_tokens=0,
+            response_time_ms=response_time_ms
+        )
+
+
 class ModelFactory:
     _model_registry = {
         "OPENAI_20b_BR": lambda: BedrockOpenAI("openai.gpt-oss-20b-1:0"),
         "OPENAI_120b_BR": lambda: BedrockOpenAI("openai.gpt-oss-120b-1:0"), 
-        "OPENAI_20b_LC": lambda: LocalOpenAI("gpt-oss:20b"),
+        "LLAMA3_2_11b_BR": lambda: BedrockLLama("us.meta.llama3-2-11b-instruct-v1:0"),
+        "NOVA_MICRO_BR": lambda: BedrockNova("us.amazon.nova-micro-v1:0"),
+        "NOVA_LITE_BR": lambda: BedrockNova("us.amazon.nova-lite-v1:0"),
+        "CLAUDE_HAIKU4_5_BR": lambda: BedrockClaude("global.anthropic.claude-haiku-4-5-20251001-v1:0"),
+        "OPENAI_20b_LC": lambda: OllamaOpenAI("gpt-oss:20b"),
+        "LLAMA3_2_11b_LC": lambda: OllamaLlama("llama3.2-vision:11b"),
     }
     
     @classmethod
