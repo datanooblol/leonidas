@@ -132,3 +132,6 @@ class SessionService:
             raise HTTPException(status_code=404, detail="Session not found")
         
         return await self.session_repo.delete(session_id)
+
+    async def count_by_project_id(self, project_id: str) -> int:
+        return await self.session_repo.count_by_project_id(project_id)
