@@ -1,4 +1,4 @@
-# Update from endpoint to router
+# Update from endpoint to router and git hub action that can pull and deploy
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
