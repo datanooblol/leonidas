@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script>
+</head>
+<body>
+    <div id="chart"></div>
+    <script>
+        fetch('./chart_config.json')
+            .then(r => r.json())
+            .then(config => {
+                console.log('Config loaded:', config);
+                Plotly.newPlot('chart', config.data, config.layout, {responsive: true});
+            })
+            .catch(err => console.error('Error:', err));
+    </script>
+</body>
+</html>

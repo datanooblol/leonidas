@@ -13,7 +13,10 @@ async def get_chat_history(
     chat_service: ChatService = Depends(get_chat_service),
     current_user: str = Depends(get_current_user)
 ):
-    return await chat_service.get_chat_history(session_id, current_user)
+    messages = await chat_service.get_chat_history(session_id, current_user)
+    for msg in messages.messages:
+        msg.model_name = ModelFactory.map_id_to_key(msg.model_name)
+    return messages
 
 @router.post("/sessions/{session_id}/messages", response_model=ChatResponse)
 async def send_message(
