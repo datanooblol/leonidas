@@ -8,7 +8,7 @@ from package.core.data_catalog import DataCatalog
 from package.core.interface import FileMetadata
 from package.prompt_hub import PromptHub
 from package.agents.query_master import QueryMasterAgent
-from package.routers.chat.interface import MessageSend, ChatResponse, ChatHistoryResponse, MessageHistoryResponse, Artifact
+from package.routers.chat.interface import MessageSend, ChatResponse, ChatHistoryResponse, MessageHistoryResponse, Artifact, ArtifactResponse
 
 class ChatService:
     def __init__(self, message_repo: MessageRepository, session_repo: SessionRepository, 
@@ -164,3 +164,14 @@ class ChatService:
             reason=ai_msg.reason,
             artifacts=artifacts if artifacts else None
         )
+
+    async def get_artifacts(self, message_id: str, user_id: str)->ArtifactResponse:
+        """Get artifacts for a message"""
+        message = await self.message_repo.get_by_id(message_id)
+        if not message:
+            raise HTTPException(status_code=404, detail="Message not found")
+
+        if message.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Unauthorized")
+
+        return ArtifactResponse(artifacts=[Artifact(**artifact) for artifact in message.artifacts] if message.artifacts else [])

@@ -14,6 +14,9 @@ class Artifact(BaseModel):
     content: Any
     title: Optional[str] = None
 
+class ArtifactResponse(BaseModel):
+    artifacts: List[Artifact] = Field(default_factory=list)
+
 class ChatResponse(BaseModel):
     id:str
     role:Role
