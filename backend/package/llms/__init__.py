@@ -23,3 +23,13 @@ class ModelFactory:
     @classmethod
     def get_available_models(cls) -> list[str]:
         return list(cls._model_registry.keys())
+
+    @classmethod
+    def map_key_to_id(cls, model_key):
+        return cls._model_registry[model_key]().model_id
+
+    @classmethod
+    def map_id_to_key(cls, model_id):
+        for key, model in cls._model_registry.items():
+            if model().model_id == model_id:
+                return key

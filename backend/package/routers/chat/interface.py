@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List
 from package.llms import Role
-from typing import Optional, Any
+from typing import Optional, Any, Literal
 
 class MessageSend(BaseModel):
     content: str
@@ -10,13 +10,13 @@ class MessageSend(BaseModel):
     chat_with_data: Optional[bool] = Field(default=False, description="Whether to chat with data context")
 
 class Artifact(BaseModel):
-    type: str
+    type: Literal["sql", "results", "chart"]
     content: Any
     title: Optional[str] = None
 
 class ArtifactResponse(BaseModel):
     message_id:str
-    artifacts: List[Artifact] = Field(default_factory=list)
+    artifacts: Optional[List[Artifact]] = Field(default=None)
 
 class ChatResponse(BaseModel):
     id:str
@@ -34,6 +34,7 @@ class MessageHistoryResponse(BaseModel):
     content: str
     role: Role
     created_at: datetime
+    model_name: Optional[str] = Field(default=None)
 
 class ChatHistoryResponse(BaseModel):
     session_id: str

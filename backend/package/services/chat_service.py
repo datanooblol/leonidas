@@ -41,6 +41,7 @@ class ChatService:
             MessageHistoryResponse(
                 message_id=msg.message_id,
                 content=msg.content,
+                model_name=msg.model_name,
                 role=msg.role,
                 created_at=datetime.fromisoformat(msg.created_at)
             )
@@ -60,7 +61,7 @@ class ChatService:
         ai_client = ModelFactory.create_model(model_name=model_id)
         
         # Create user message record
-        user_msg = await self.message_repo.create_user_message(session_id, user_id, message_data.content)
+        user_msg = await self.message_repo.create_user_message(session_id, user_id, message_data.content, ModelFactory.map_key_to_id(message_data.model_id))
         
         # Get recent history for AI context
         recent_messages = await self.message_repo.get_recent_by_session_id(session_id, 10)
@@ -118,7 +119,8 @@ class ChatService:
                 # Add data results as artifact
                 artifacts.append(Artifact(
                     type="results",
-                    content=results.to_json(orient="records"),
+                    content=results_markdown,
+                    # content=results.to_json(orient="records"),
                     title="Query Results"
                 ))
                 
@@ -163,7 +165,7 @@ class ChatService:
             input_tokens=ai_msg.input_tokens,
             output_tokens=ai_msg.output_tokens,
             reason=ai_msg.reason,
-            artifacts=artifacts if artifacts else None
+            # artifacts=artifacts if artifacts else None
         )
 
     async def get_artifacts(self, message_id: str, user_id: str)->ArtifactResponse:
@@ -175,4 +177,4 @@ class ChatService:
         if message.user_id != user_id:
             raise HTTPException(status_code=403, detail="Unauthorized")
 
-        return ArtifactResponse(message_id=message_id, artifacts=[Artifact(**artifact) for artifact in message.artifacts] if message.artifacts else [])
+        return ArtifactResponse(message_id=message_id, artifacts=[Artifact(**artifact) for artifact in message.artifacts] if message.artifacts else None)

@@ -46,11 +46,12 @@ class DynamoDBMessageRepository(MessageRepository[Message]):
         response = self.table.query(**query_params)
         return [Message(**item) for item in response.get("Items", [])]
     
-    async def create_user_message(self, session_id: str, user_id: str, content: str) -> Message:
+    async def create_user_message(self, session_id: str, user_id: str, content: str, model_name:str) -> Message:
         message = Message(
             session_id=session_id,
             user_id=user_id,
             content=content,
+            model_name=model_name,
             role=Role.USER
         )
         self.table.put_item(Item=message.model_dump())
