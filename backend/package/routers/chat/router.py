@@ -22,7 +22,9 @@ async def send_message(
     chat_service: ChatService = Depends(get_chat_service),
     current_user: str = Depends(get_current_user)
 ):
-    return await chat_service.send_message(session_id, current_user, message_data)
+    response = await chat_service.send_message(session_id, current_user, message_data)
+    response.model_name = message_data.model_id
+    return response
 
 @router.get("/available-models")
 async def get_available_models(

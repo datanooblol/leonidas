@@ -158,6 +158,7 @@ class ChatService:
             id=ai_msg.message_id,
             role=ai_msg.role,
             content=ai_msg.content,
+            model_name=ai_msg.model_name,
             response_time_ms=ai_msg.response_time_ms,
             input_tokens=ai_msg.input_tokens,
             output_tokens=ai_msg.output_tokens,
@@ -174,4 +175,4 @@ class ChatService:
         if message.user_id != user_id:
             raise HTTPException(status_code=403, detail="Unauthorized")
 
-        return ArtifactResponse(artifacts=[Artifact(**artifact) for artifact in message.artifacts] if message.artifacts else [])
+        return ArtifactResponse(message_id=message_id, artifacts=[Artifact(**artifact) for artifact in message.artifacts] if message.artifacts else [])
