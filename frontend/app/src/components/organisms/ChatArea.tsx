@@ -30,6 +30,9 @@ interface ChatAreaProps {
   onToggleSidebar: () => void
   onToggleFileData: () => void
   onBack: () => void
+  selectedModel?: string
+  availableModels?: string[]
+  onModelChange?: (model: string) => void
 }
 
 const D3Renderer = ({ d3Code }: { d3Code: string }) => {
@@ -178,7 +181,10 @@ export const ChatArea = ({
   onSendMessage,
   onToggleSidebar,
   onToggleFileData,
-  onBack
+  onBack,
+  selectedModel = "OPENAI_20b_BR",
+  availableModels = [],
+  onModelChange
 }: ChatAreaProps) => {
   const [expandedArtifacts, setExpandedArtifacts] = useState<Set<string>>(new Set())
 
@@ -352,7 +358,7 @@ Plotly.newPlot(div, data, layout, {responsive: true});`
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 pb-32">
+      <div className="flex-1 overflow-y-auto p-4 pt-8 pb-40">
 
 
         {!currentSession ? (
@@ -364,7 +370,7 @@ Plotly.newPlot(div, data, layout, {responsive: true});`
             </div>
           </div>
         ) : (
-          <div className="space-y-4 max-w-3xl mx-auto">
+          <div className="space-y-4 max-w-5xl mx-auto">
             {displayMessages.map(message => (
               <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {message.role === 'user' ? (
@@ -372,8 +378,10 @@ Plotly.newPlot(div, data, layout, {responsive: true});`
                     {message.content}
                   </div>
                 ) : (
-                  <div className="w-full">
-                    <MarkdownRenderer content={message.content} />
+                  <div className="w-full max-w-none overflow-hidden">
+                    <div className="break-words">
+                      <MarkdownRenderer content={message.content} />
+                    </div>
 
 
 
@@ -528,7 +536,7 @@ Plotly.newPlot(div, data, layout, {responsive: true});`
       {currentSession && (
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent">
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white border border-gray-300 rounded-2xl shadow-lg p-4">
+            <div className="bg-white border border-gray-300 rounded-2xl shadow-lg p-4 max-w-full overflow-hidden">
               <ChatInput
                 value={input}
                 onChange={onInputChange}
@@ -538,6 +546,9 @@ Plotly.newPlot(div, data, layout, {responsive: true});`
                 useFileData={useFileData}
                 onToggleFileData={onToggleFileData}
                 selectedFilesCount={selectedFilesCount}
+                selectedModel={selectedModel}
+                availableModels={availableModels}
+                onModelChange={onModelChange}
               />
             </div>
           </div>

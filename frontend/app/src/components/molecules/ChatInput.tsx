@@ -1,4 +1,5 @@
 import { Button } from '../atoms/Button'
+import { ModelSelector } from './ModelSelector'
 
 interface ChatInputProps {
   value: string
@@ -9,6 +10,9 @@ interface ChatInputProps {
   useFileData?: boolean
   onToggleFileData?: () => void
   selectedFilesCount?: number
+  selectedModel?: string
+  availableModels?: string[]
+  onModelChange?: (model: string) => void
 }
 
 export const ChatInput = ({ 
@@ -19,7 +23,10 @@ export const ChatInput = ({
   disabled = false,
   useFileData = false,
   onToggleFileData,
-  selectedFilesCount = 0
+  selectedFilesCount = 0,
+  selectedModel = "OPENAI_20b_BR",
+  availableModels = [],
+  onModelChange
 }: ChatInputProps) => (
   <div className="space-y-2">
     {/* Chat Input */}
@@ -47,23 +54,38 @@ export const ChatInput = ({
       </button>
     </div>
     
-    {/* File Data Switch */}
-    {onToggleFileData && (
-      <div className="flex items-center space-x-2 text-xs text-gray-500">
-        <span>ใช้ข้อมูลจากไฟล์</span>
-        <button
-          onClick={onToggleFileData}
-          className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
-            useFileData ? 'bg-green-500' : 'bg-gray-300'
-          }`}
-        >
-          <span
-            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-              useFileData ? 'translate-x-3.5' : 'translate-x-0.5'
-            }`}
+    {/* Controls */}
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-3">
+        {/* File Data Switch */}
+        {onToggleFileData && (
+          <div className="flex items-center space-x-2 text-xs text-gray-500">
+            <span>ใช้ข้อมูลจากไฟล์</span>
+            <button
+              onClick={onToggleFileData}
+              className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                useFileData ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                  useFileData ? 'translate-x-3.5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
+        )}
+        
+        {/* Model Selector */}
+        {availableModels.length > 0 && onModelChange && (
+          <ModelSelector
+            selectedModel={selectedModel}
+            models={availableModels}
+            onModelChange={onModelChange}
+            disabled={disabled}
           />
-        </button>
+        )}
       </div>
-    )}
+    </div>
   </div>
 )

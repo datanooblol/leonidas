@@ -6,7 +6,7 @@ import { ChatArea } from '../organisms/ChatArea'
 import { UploadStatus } from '../molecules/UploadStatus'
 import { NewChatModal } from '../molecules/NewChatModal'
 import { FileMetadataModal } from '../organisms/FileMetadataModal'
-import { apiService } from '../../../lib/api'
+import { apiService, getLastUsedModel } from '../../../lib/api'
 
 interface ProjectData {
   project_id: string
@@ -86,9 +86,12 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
   const [isCreatingChat, setIsCreatingChat] = useState(false)
   const [showMetadataModal, setShowMetadataModal] = useState(false)
   const [currentMetadata, setCurrentMetadata] = useState<FileMetadata | null>(null)
+  const [availableModels, setAvailableModels] = useState<string[]>([])
+  const [selectedModel, setSelectedModel] = useState<string>("OPENAI_20b_BR")
 
   useEffect(() => {
     loadProjectData()
+    loadAvailableModels()
   }, [project.project_id])
 
   useEffect(() => {
@@ -98,6 +101,20 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
       setMessages([])
     }
   }, [currentSessionId])
+
+  // Update selected model when chat history loads
+  useEffect(() => {
+    if (messages.length > 0 && availableModels.length > 0) {
+      const lastModel = getLastUsedModel(messages.map(msg => ({
+        message_id: msg.id,
+        content: msg.content,
+        role: msg.role,
+        created_at: msg.timestamp.toISOString(),
+        model_name: (msg as any).model_name
+      })), availableModels)
+      setSelectedModel(lastModel)
+    }
+  }, [messages, availableModels])
 
   // Clear selected files when useFileData is turned off
   useEffect(() => {
@@ -132,6 +149,18 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
     }
   }
 
+  const loadAvailableModels = async () => {
+    try {
+      const data = await apiService.getAvailableModels()
+      setAvailableModels(data.models)
+      if (data.models.length > 0 && !selectedModel) {
+        setSelectedModel(data.models[0])
+      }
+    } catch (error) {
+      console.error('Failed to load available models:', error)
+    }
+  }
+
   const loadChatHistory = async () => {
     if (!currentSessionId) return
     
@@ -141,8 +170,9 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
         id: msg.message_id,
         content: msg.content,
         role: msg.role,
-        timestamp: new Date(msg.created_at)
-      }))
+        timestamp: new Date(msg.created_at),
+        model_name: msg.model_name
+      } as any))
       
       setMessages(formattedMessages)
     } catch (error) {
@@ -297,7 +327,7 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
     setIsLoading(true)
 
     try {
-      const response = await apiService.sendMessage(currentSessionId, messageContent, useFileData)
+      const response = await apiService.sendMessage(currentSessionId, messageContent, useFileData, selectedModel)
       const assistantMessage: Message = {
         id: response.id,
         content: response.content,
@@ -372,6 +402,9 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
             onToggleSidebar={handleToggleSidebar}
             onToggleFileData={handleToggleFileData}
             onBack={onBack}
+            selectedModel={selectedModel}
+            availableModels={availableModels}
+            onModelChange={setSelectedModel}
           />
         }
       />
