@@ -16,6 +16,8 @@ class ProjectResponse(BaseModel):
     description: str
     created_at: datetime
     updated_at: datetime
+    file_count: int = 0
+    session_count: int = 0
 
 class ProjectListResponse(BaseModel):
     projects: List[ProjectResponse]

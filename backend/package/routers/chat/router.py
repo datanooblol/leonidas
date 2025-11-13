@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 from package.core.dependencies import get_chat_service
 from package.services.chat_service import ChatService
 from package.core.auth_middleware import get_current_user
-from .interface import MessageSend, ChatResponse, ChatHistoryResponse
+from package.llms import ModelFactory
+from .interface import MessageSend, ChatResponse, ChatHistoryResponse, ArtifactResponse
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -21,4 +22,20 @@ async def send_message(
     chat_service: ChatService = Depends(get_chat_service),
     current_user: str = Depends(get_current_user)
 ):
-    return await chat_service.send_message(session_id, current_user, message_data)
+    response = await chat_service.send_message(session_id, current_user, message_data)
+    response.model_name = message_data.model_id
+    return response
+
+@router.get("/available-models")
+async def get_available_models(
+    current_user: str = Depends(get_current_user)
+):
+    return dict(models=ModelFactory.get_available_models())
+
+@router.get("/{message_id}/artifacts", response_model=ArtifactResponse)
+async def get_artifacts(
+    message_id: str,
+    chat_service: ChatService = Depends(get_chat_service),
+    current_user: str = Depends(get_current_user)
+):
+    return await chat_service.get_artifacts(message_id, current_user)

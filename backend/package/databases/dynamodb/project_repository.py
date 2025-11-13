@@ -73,18 +73,3 @@ class DynamoDBProjectRepository(ProjectRepository[Project]):
         
         self.table.delete_item(Key={'project_id': id})
         return True
-    
-    # async def batch_get_by_ids(self, ids: List[str]) -> List[Project]:
-    #     if not ids:
-    #         return []
-        
-    #     response = self.dynamodb.batch_get_item(
-    #         RequestItems={
-    #             settings.PROJECTS_TABLE: {
-    #                 'Keys': [{'project_id': id} for id in ids]
-    #             }
-    #         }
-    #     )
-        
-    #     items = response.get('Responses', {}).get(settings.PROJECTS_TABLE, [])
-    #     return [Project(**item) for item in items]

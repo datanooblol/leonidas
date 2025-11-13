@@ -53,7 +53,7 @@ from package.services.project_service import ProjectService
 
 @lru_cache()
 def get_project_service() -> ProjectService:
-    return ProjectService(get_project_repository())
+    return ProjectService(get_project_repository(), get_file_repository(), get_session_repository())
 
 from package.services.session_service import SessionService
 

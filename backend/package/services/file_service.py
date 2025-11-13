@@ -4,17 +4,20 @@ from typing import List, Optional
 from package.core.repositories import FileRepository, ProjectRepository
 from package.schemas.file import File, FileStatus, FileSource
 from package.core.interface import FieldDetail
-from package.routers.files.interface import FileResponse, FileListResponse, FileMetadataResponse
+from package.routers.files.interface import FileResponse, FileListResponse, FileMetadataResponse, PresignedUrlResponse
 from package.core.config import settings
 from package.core.data_catalog import DataCatalog
 from package.core.aws_config import get_aws_configs
 from package.core.interface import FileMetadata
+from uuid import uuid4
+import boto3
 
+s3_client = boto3.client('s3', region_name=settings.AWS_REGION)
 class FileService:
     def __init__(self, file_repo: FileRepository, project_repo: ProjectRepository):
         self.file_repo = file_repo
         self.project_repo = project_repo
-    
+
     async def create_file_record(self, project_id: str, user_id: str, filename: str, 
                                s3_key: str, size: int, file_id: Optional[str] = None,
                                status: FileStatus = FileStatus.UPLOADING, 
@@ -41,6 +44,7 @@ class FileService:
             size=created_file.size,
             status=created_file.status,
             source=created_file.source,
+            selected=False,
             created_at=datetime.fromisoformat(created_file.created_at),
             updated_at=datetime.fromisoformat(created_file.updated_at)
         )
@@ -89,9 +93,9 @@ class FileService:
             size=file.size,
             status=file.status,
             source=file.source,
+            selected=file.selected,
             name=file.name,
             description=file.description,
-            selected=file.selected,
             columns=file.columns,
             created_at=datetime.fromisoformat(file.created_at),
             updated_at=datetime.fromisoformat(file.updated_at)
@@ -117,6 +121,7 @@ class FileService:
             size=updated_file.size,
             status=updated_file.status,
             source=updated_file.source,
+            selected=updated_file.selected,
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
@@ -142,6 +147,7 @@ class FileService:
             size=updated_file.size,
             status=updated_file.status,
             source=updated_file.source,
+            selected=updated_file.selected,
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
@@ -166,6 +172,7 @@ class FileService:
             size=updated_file.size,
             status=updated_file.status,
             source=updated_file.source,
+            selected=updated_file.selected,
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
@@ -206,6 +213,7 @@ class FileService:
             size=updated_file.size,
             status=updated_file.status,
             source=updated_file.source,
+            selected=updated_file.selected,
             created_at=datetime.fromisoformat(updated_file.created_at),
             updated_at=datetime.fromisoformat(updated_file.updated_at)
         )
@@ -227,6 +235,7 @@ class FileService:
                 size=file.size,
                 status=file.status,
                 source=file.source,
+                selected=file.selected,
                 created_at=datetime.fromisoformat(file.created_at),
                 updated_at=datetime.fromisoformat(file.updated_at)
             )
@@ -247,3 +256,50 @@ class FileService:
             raise HTTPException(status_code=404, detail="File not found")
         
         return await self.file_repo.delete(file_id)
+
+    async def count_by_project_id(self, project_id:str) -> int | None:
+        response = await self.file_repo.count_by_project_id(project_id)
+        return response
+
+    async def get_presigned_upload_url(self, project_id, user_id, filename):
+        file_id = str(uuid4())
+        s3_key = f"{user_id}/{project_id}/files/{file_id}_{filename}"        
+
+        try:
+            # Generate presigned POST URL
+            response = s3_client.generate_presigned_post(
+                Bucket=settings.FILE_BUCKET,
+                Key=s3_key,
+                Fields={"Content-Type": "text/csv"},
+                Conditions=[
+                    {"Content-Type": "text/csv"},
+                    ["content-length-range", 1, 10485760]  # 1 byte to 10MB
+                ],
+                ExpiresIn=3600  # 1 hour
+            )
+            
+            entity = File(project_id=project_id, filename=filename, s3_key=s3_key, file_id=file_id, size=0)
+            _ = await self.file_repo.create(entity)
+            return PresignedUrlResponse(
+                url=response['url'],
+                file_id=file_id,
+                fields=response['fields']
+            )
+            
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to generate upload URL: {str(e)}")
+        
+    async def get_presigned_download_url(self, file_id:str, user_id:str)->PresignedUrlResponse:
+        file_record:File = await self.file_repo.get_by_id(file_id)
+        try:
+            # Generate presigned GET URL
+            download_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': settings.FILE_BUCKET, 'Key': file_record.s3_key},
+                ExpiresIn=3600  # 1 hour
+            )
+            
+            return PresignedUrlResponse(url=download_url, file_id=file_record.file_id)
+            
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to generate download URL: {str(e)}")

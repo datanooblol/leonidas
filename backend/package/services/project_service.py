@@ -4,10 +4,14 @@ from typing import List
 from package.core.repositories import ProjectRepository
 from package.schemas.project import Project
 from package.routers.projects.interface import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectListResponse
+from package.core.repositories import ProjectRepository, FileRepository, SessionRepository
+
 
 class ProjectService:
-    def __init__(self, project_repo: ProjectRepository):
+    def __init__(self, project_repo: ProjectRepository, file_repo: FileRepository, session_repo: SessionRepository):
         self.project_repo = project_repo
+        self.file_repo = file_repo
+        self.session_repo = session_repo
     
     async def create_project(self, user_id: str, project_data: ProjectCreate) -> ProjectResponse:
         """Create new project"""
@@ -27,22 +31,26 @@ class ProjectService:
         )
     
     async def get_user_projects(self, user_id: str) -> ProjectListResponse:
-        """Get all projects for a user"""
+        """Get all projects for a user with file and session counts"""
         projects = await self.project_repo.get_by_user_id(user_id)
         
-        project_responses = [
-            ProjectResponse(
+        project_responses = []
+        for project in projects:
+            file_count = await self.file_repo.count_by_project_id(project.project_id)
+            session_count = await self.session_repo.count_by_project_id(project.project_id)
+            project_responses.append(ProjectResponse(
                 project_id=project.project_id,
                 name=project.name,
                 description=project.description,
                 created_at=datetime.fromisoformat(project.created_at),
-                updated_at=datetime.fromisoformat(project.updated_at)
-            )
-            for project in projects
-        ]
+                updated_at=datetime.fromisoformat(project.updated_at),
+                file_count=file_count,
+                session_count=session_count
+            ))
         
         return ProjectListResponse(projects=project_responses)
-    
+
+
     async def get_project(self, project_id: str, user_id: str) -> ProjectResponse:
         """Get project by ID with ownership check"""
         project = await self.project_repo.get_by_id_and_user(project_id, user_id)
