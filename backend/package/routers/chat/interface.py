@@ -6,7 +6,7 @@ from typing import Optional, Any
 
 class MessageSend(BaseModel):
     content: str
-    model_id:Optional[str] = Field(default="OPENAI_20b_BR")
+    model_id:str = Field(default="OPENAI_20b_BR")
     chat_with_data: Optional[bool] = Field(default=False, description="Whether to chat with data context")
 
 class Artifact(BaseModel):
@@ -14,10 +14,15 @@ class Artifact(BaseModel):
     content: Any
     title: Optional[str] = None
 
+class ArtifactResponse(BaseModel):
+    message_id:str
+    artifacts: List[Artifact] = Field(default_factory=list)
+
 class ChatResponse(BaseModel):
     id:str
     role:Role
     content:str
+    model_name:str
     response_time_ms:int
     input_tokens:int
     output_tokens:int
