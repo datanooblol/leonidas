@@ -137,7 +137,7 @@ const IframeWithAdjustment = ({ htmlContent }: { htmlContent: string }) => {
             margin: 0 !important; 
             padding: 0 !important; 
             overflow: hidden !important;
-            height: 100% !important;
+            height: auto !important;
             border: 5px solid green !important;
             box-sizing: border-box !important;
           }
