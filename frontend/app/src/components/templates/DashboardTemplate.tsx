@@ -7,8 +7,10 @@ interface DashboardTemplateProps {
 }
 
 export const DashboardTemplate = ({ userEmail, onLogout, children }: DashboardTemplateProps) => (
-  <div className="min-h-screen bg-white">
+  <div className="h-screen bg-white flex flex-col">
     <DashboardHeader userEmail={userEmail} onLogout={onLogout} />
-    {children}
+    <div className="flex-1 overflow-hidden">
+      {children}
+    </div>
   </div>
 )

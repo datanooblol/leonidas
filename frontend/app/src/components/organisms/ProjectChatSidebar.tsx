@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '../atoms/Button'
 import { FileUploadButton } from '../molecules/FileUploadButton'
+import { FileUploadModal } from '../molecules/FileUploadModal'
 
 interface FileData {
   file_id: string
@@ -59,6 +60,7 @@ export const ProjectChatSidebar = ({
   const [editingSession, setEditingSession] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
+  const [showUploadModal, setShowUploadModal] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const sessionMenuRef = useRef<HTMLDivElement>(null)
@@ -157,7 +159,7 @@ export const ProjectChatSidebar = ({
           </button>
         </div>
       ) : (
-        <div className="p-4 space-y-4 h-full flex flex-col">
+        <div className="p-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={onToggleSidebar}
@@ -174,16 +176,8 @@ export const ProjectChatSidebar = ({
             ✏️ New Chat
           </button>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            className="hidden"
-            accept=".txt,.pdf,.doc,.docx,.json,.csv,.md,.py,.js,.ts"
-          />
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => setShowUploadModal(true)}
             disabled={isUploading}
             className="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-200 rounded transition-colors disabled:opacity-50"
           >
@@ -199,70 +193,66 @@ export const ProjectChatSidebar = ({
                 </div>
               ) : (
                 files.map(file => (
-                  <div
-                    key={file.file_id}
-                    className={`flex items-center space-x-2 p-2 rounded group cursor-pointer ${useFileData
-                      ? 'hover:bg-gray-100'
-                      : 'opacity-50 cursor-not-allowed'
-                      }`}
-                    onClick={async () => {
-                      if (!useFileData) return
-                      
-                      console.log('File container clicked for:', file.filename, 'ID:', file.file_id)
-                      
-                      const isCurrentlySelected = file.selected || false
-                      const newSelected = !isCurrentlySelected
-                      
-                      console.log('Will send to API:')
-                      console.log(`PATCH /files/${file.file_id}/selection?selected=${newSelected}`)
-                      
-                      try {
-                        const { apiService } = await import('../../../lib/api')
-                        await apiService.updateFileSelection(file.file_id, newSelected)
-                        console.log('✅ API call successful')
-                      } catch (error) {
-                        console.error('❌ API call failed:', error)
-                      }
-                      
-                      onFileSelect(file.file_id)
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={file.selected || false}
-                      onChange={() => {}} // Empty handler since parent div handles the click
-                      disabled={!useFileData}
-                      className="w-4 h-4 accent-gray-500 pointer-events-none"
-                    />
-                    <span className="text-sm flex-1">
-                      {file.filename}
-                    </span>
-                    <button
-                      onClick={() => onViewMetadata?.(file.file_id)}
-                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 p-1 text-xs"
-                      title="View metadata"
-                    >
-                      ℹ️
-                    </button>
+                  <div key={file.file_id} className="p-2 rounded group hover:bg-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div 
+                        className={`flex items-center space-x-2 flex-1 cursor-pointer ${!useFileData ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={async () => {
+                          if (!useFileData) return
+                          
+                          const isCurrentlySelected = file.selected || false
+                          const newSelected = !isCurrentlySelected
+                          
+                          try {
+                            const { apiService } = await import('../../../lib/api')
+                            await apiService.updateFileSelection(file.file_id, newSelected)
+                          } catch (error) {
+                            console.error('❌ API call failed:', error)
+                          }
+                          
+                          onFileSelect(file.file_id)
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={file.selected || false}
+                          onChange={() => {}}
+                          disabled={!useFileData}
+                          className="w-4 h-4 accent-blue-500 pointer-events-none"
+                        />
+                        <span className="text-sm truncate">
+                          {file.filename}
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onViewMetadata?.(file.file_id)
+                        }}
+                        className="ml-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-600 rounded transition-colors"
+                        title="View metadata"
+                      >
+                        Info
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          <div className="border-t pt-4">
+          <div className="flex-1 flex flex-col min-h-0 border-t pt-4">
             <h3 className="font-medium mb-2">💬 Chat History</h3>
-            <div className="max-h-24 overflow-y-auto space-y-1">
+            <div className="flex-1 overflow-y-auto space-y-1">
               {sessions.length === 0 ? (
                 <div className="text-sm text-gray-500 text-center py-4">
                   No chat sessions
                 </div>
               ) : (
                 sessions.map(session => (
-                  <div key={session.session_id} className="relative">
+                  <div key={session.session_id}>
                     <div
-                      className={`flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer text-sm group ${currentSessionId === session.session_id ? 'bg-gray-200 border-l-4 border-gray-500' : ''
-                        }`}
+                      className={`flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer text-sm group ${currentSessionId === session.session_id ? 'bg-gray-200 border-l-4 border-gray-500' : ''}`}
                       onClick={() => !editingSession && onSessionSelect(session.session_id)}
                     >
                       {editingSession === session.session_id ? (
@@ -295,8 +285,6 @@ export const ProjectChatSidebar = ({
               )}
             </div>
           </div>
-
-          <div className="flex-1"></div>
           
           <div className="border-t pt-4 mt-auto">
             <div className="relative" ref={dropdownRef}>
@@ -354,6 +342,13 @@ export const ProjectChatSidebar = ({
           </button>
         </div>
       )}
+
+      <FileUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={onFileUpload}
+        isUploading={isUploading}
+      />
     </div>
   )
 }

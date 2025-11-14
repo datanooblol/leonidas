@@ -333,10 +333,24 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
         content: response.content,
         role: 'assistant',
         timestamp: new Date(),
-        artifacts: response.artifacts
-      }
+        artifacts: response.artifacts,
+        model_name: response.model_name
+      } as any
 
       setMessages(prev => [...prev, assistantMessage])
+      
+      // อัพเดท selectedModel จาก response
+      console.log('🔍 Debug Model Update:')
+      console.log('- Response model_name:', response.model_name)
+      console.log('- Available models:', availableModels)
+      console.log('- Current selected:', selectedModel)
+      
+      if (response.model_name && availableModels.includes(response.model_name)) {
+        console.log('✅ Updating selectedModel to:', response.model_name)
+        setSelectedModel(response.model_name)
+      } else {
+        console.log('❌ Not updating selectedModel')
+      }
     } catch (error) {
       console.error('Error sending message:', error)
     } finally {

@@ -4,14 +4,13 @@ import { ChatTemplate } from '../templates/ChatTemplate'
 import { ChatArea } from '../organisms/ChatArea'
 import { ProjectChatSidebar } from '../organisms/ProjectChatSidebar'
 import { MetadataModal } from '../organisms/MetadataModal'
-import { apiService } from '../../../lib/api'
+import { apiService, getLastUsedModel } from '../../../lib/api'
 
 interface Message {
   id: string
   content: string
   role: 'user' | 'assistant'
   timestamp: Date
-  artifacts?: any[]
 }
 
 interface FileData {
@@ -51,10 +50,31 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
   const [showMetadata, setShowMetadata] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState<string | null>(null)
   const [chatWithData, setChatWithData] = useState(false)
+  const [selectedModel, setSelectedModel] = useState("OPENAI_20b_BR")
+  const [availableModels, setAvailableModels] = useState<string[]>([])
 
   useEffect(() => {
     loadData()
+    loadModels()
   }, [sessionId, projectId])
+
+  useEffect(() => {
+    if (availableModels.length > 0) {
+      loadData()
+    }
+  }, [availableModels])
+
+  const loadModels = async () => {
+    try {
+      const { models } = await apiService.getAvailableModels()
+      setAvailableModels(models)
+      if (models.length > 0) {
+        setSelectedModel(models[0])
+      }
+    } catch (error) {
+      console.error('Error loading models:', error)
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -71,6 +91,11 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
       
       setMessages(formattedMessages)
       setFiles(filesData)
+      
+      if (availableModels.length > 0) {
+        const lastModel = getLastUsedModel(history.messages || [], availableModels)
+        setSelectedModel(lastModel)
+      }
     } catch (error) {
       console.error('Error loading data:', error)
     }
@@ -105,13 +130,12 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
     setIsLoading(true)
 
     try {
-      const response = await apiService.sendMessage(sessionId, messageContent, chatWithData)
+      const response = await apiService.sendMessage(sessionId, messageContent, chatWithData, selectedModel)
       const assistantMessage: Message = {
         id: response.id,
         content: response.content,
         role: 'assistant',
-        timestamp: new Date(),
-        artifacts: response.artifacts
+        timestamp: new Date()
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -169,6 +193,9 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             onToggleFileData={setChatWithData}
             onBack={onBack}
+            selectedModel={selectedModel}
+            availableModels={availableModels}
+            onModelChange={setSelectedModel}
           />
         }
       />

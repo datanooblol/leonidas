@@ -29,7 +29,7 @@ export const NewChatModal = ({ show, onClose, onCreateChat, isCreating }: NewCha
 
   return (
     <Modal onClose={handleClose}>
-      <div className="w-96">
+      <div className="w-96 bg-white bg-opacity-95 backdrop-blur-sm rounded-lg p-6 shadow-xl">
         <h2 className="text-lg font-semibold mb-4">สร้างแชทใหม่</h2>
         
         <form onSubmit={handleSubmit}>
