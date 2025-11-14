@@ -19,7 +19,6 @@
 
 # CMD ["main.handler"]
 
-# Build stage
 FROM public.ecr.aws/lambda/python:3.12 AS builder
 
 # Install uv
@@ -28,21 +27,18 @@ RUN pip install uv
 # Copy dependency files
 COPY pyproject.toml .
 
-# Install dependencies to a virtual environment
-RUN uv venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN uv pip install -e .
+# Install dependencies to a temporary directory
+RUN uv pip install --target /tmp/deps -e .
 
 # Copy and run setup script
 COPY backend_setup.py .
-RUN uv run backend_setup.py
+RUN PYTHONPATH=/tmp/deps python backend_setup.py
 
 # Runtime stage
 FROM public.ecr.aws/lambda/python:3.12
 
-# Copy only the virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Copy dependencies to Lambda's Python path
+COPY --from=builder /tmp/deps/ ${LAMBDA_RUNTIME_DIR}/
 
 # Copy application code
 COPY package/ ${LAMBDA_TASK_ROOT}/package/
