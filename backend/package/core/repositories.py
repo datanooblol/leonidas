@@ -91,7 +91,7 @@ class MessageRepository(BaseRepository[T]):
         pass
     
     @abstractmethod
-    async def create_user_message(self, session_id: str, user_id: str, content: str) -> T:
+    async def create_user_message(self, session_id: str, user_id: str, content: str, model_name:str) -> T:
         pass
     
     @abstractmethod

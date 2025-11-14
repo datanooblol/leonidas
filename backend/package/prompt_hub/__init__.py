@@ -20,3 +20,7 @@ class PromptHub:
     @property
     def chat_with_bro(self):
         return _run(filename="chat_with_bro.md")
+
+    @property
+    def chart_builder(self):
+        return _run(filename="chart_builder.md")
