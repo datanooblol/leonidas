@@ -8,6 +8,7 @@ from package.core.data_catalog import DataCatalog
 from package.core.interface import FileMetadata
 from package.prompt_hub import PromptHub
 from package.agents.query_master import QueryMasterAgent
+from package.agents.chart_builder import ChartBuilder
 from package.routers.chat.interface import MessageSend, ChatResponse, ChatHistoryResponse, MessageHistoryResponse, Artifact, ArtifactResponse
 
 class ChatService:
@@ -123,8 +124,15 @@ class ChatService:
                     # content=results.to_json(orient="records"),
                     title="Query Results"
                 ))
-                
-                # Generate AI response with data context
+
+                plotly_request_prompt = f"DATA:\n\n{results.to_markdown()}\n\nUSER_INPUT:\n\n{message_data.content}\n\n"
+                plotly_json_str = ChartBuilder(llm=ai_client).run(results, conversation + [UserMessage(content=plotly_request_prompt)])
+                if plotly_json_str:
+                    artifacts.append(Artifact(
+                        type="chart",
+                        content=plotly_json_str,
+                        title="Generated Plotly json"
+                    ))
                 result_prompt = f"CONTEXT:\n\n{results_markdown}\n\nUSER_INPUT:\n\n{message_data.content}\n\n"
                 model_response = ai_client.run(
                     PromptHub().chat_with_data, 

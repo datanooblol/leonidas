@@ -79,3 +79,5 @@ ehthumbs.db
 Thumbs.db
 
 backend/dev.ipynb
+
+backend/chart_config.json
