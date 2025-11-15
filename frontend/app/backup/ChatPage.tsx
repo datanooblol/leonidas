@@ -1,0 +1,337 @@
+// 'use client'
+
+// import { useState, useRef, useEffect } from 'react'
+// import { apiService } from '../lib/api'
+// import MarkdownRenderer from './MarkdownRenderer'
+
+// interface Message {
+//   id: string
+//   content: string
+//   role: 'user' | 'assistant'
+//   timestamp: Date
+// }
+
+// interface ChatPageProps {
+//   projectId: string
+//   sessionId: string
+//   onBack: () => void
+// }
+
+// export default function ChatPage({ projectId, sessionId, onBack }: ChatPageProps) {
+//   const [messages, setMessages] = useState<Message[]>([])
+//   const [input, setInput] = useState('')
+//   const [isLoading, setIsLoading] = useState(false)
+//   const [sessionName, setSessionName] = useState('')
+//   const [chatWithData, setChatWithData] = useState(false)
+//   const [selectedFiles, setSelectedFiles] = useState<any[]>([])
+//   const [allFiles, setAllFiles] = useState<any[]>([])
+//   const [showFileSelector, setShowFileSelector] = useState(false)
+//   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+//   const scrollToBottom = () => {
+//     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+//   }
+
+//   useEffect(() => {
+//     scrollToBottom()
+//   }, [messages])
+
+//   useEffect(() => {
+//     const loadSessionData = async () => {
+//       console.log('🔄 Loading chat history for:', sessionId)
+//       try {
+//         // Load messages using /sessions/{id}/chat endpoint
+//         const history = await apiService.getChatHistory(sessionId)
+//         console.log('✅ Chat history loaded:', history)
+        
+//         // Format messages for display
+//         const formattedMessages: Message[] = (history.messages || []).map(msg => ({
+//           id: msg.message_id,
+//           content: msg.content,
+//           role: msg.role,
+//           timestamp: new Date(msg.created_at)
+//         }))
+//         console.log('💬 Formatted messages:', formattedMessages.length, 'messages')
+//         setMessages(formattedMessages)
+        
+//         // Load all files and selected files
+//         const [allFilesData, selectedFilesData] = await Promise.all([
+//           apiService.getFiles(projectId),
+//           apiService.getSelectedFiles(projectId)
+//         ])
+//         console.log('📁 All files loaded:', allFilesData.length, 'files')
+//         console.log('📁 Selected files loaded:', selectedFilesData.length, 'files')
+//         setAllFiles(allFilesData)
+//         setSelectedFiles(selectedFilesData)
+//       } catch (error) {
+//         console.error('❌ Error loading session data:', error)
+//       }
+//     }
+
+//     // Reset messages when switching sessions
+//     setMessages([])
+//     loadSessionData()
+//   }, [sessionId, projectId])
+
+//   const sendMessage = async () => {
+//     if (!input.trim() || isLoading) return
+
+//     const userMessage: Message = {
+//       id: Date.now().toString(),
+//       content: input,
+//       role: 'user',
+//       timestamp: new Date()
+//     }
+
+//     setMessages(prev => [...prev, userMessage])
+//     const messageContent = input
+//     setInput('')
+//     setIsLoading(true)
+
+//     try {
+//       const response = await apiService.sendMessage(sessionId, messageContent, chatWithData)
+      
+//       const assistantMessage: Message = {
+//         id: response.id,
+//         content: response.content,
+//         role: 'assistant',
+//         timestamp: new Date()
+//       }
+
+//       setMessages(prev => [...prev, assistantMessage])
+//     } catch (error) {
+//       console.error('Error sending message:', error)
+//       const errorMessage: Message = {
+//         id: (Date.now() + 1).toString(),
+//         content: 'เกิดข้อผิดพลาดในการส่งข้อความ กรุณาลองใหม่',
+//         role: 'assistant',
+//         timestamp: new Date()
+//       }
+//       setMessages(prev => [...prev, errorMessage])
+//     } finally {
+//       setIsLoading(false)
+//     }
+//   }
+
+//   const handleKeyPress = (e: React.KeyboardEvent) => {
+//     if (e.key === 'Enter' && !e.shiftKey) {
+//       e.preventDefault()
+//       sendMessage()
+//     }
+//   }
+
+//   const clearChat = () => {
+//     setMessages([])
+//   }
+
+//   const toggleFileSelection = async (fileId: string) => {
+//     try {
+//       const isSelected = selectedFiles.some(f => f.file_id === fileId)
+//       await apiService.updateFileSelection(fileId, !isSelected)
+      
+//       // Refresh selected files
+//       const updatedSelectedFiles = await apiService.getSelectedFiles(projectId)
+//       setSelectedFiles(updatedSelectedFiles)
+//     } catch (error) {
+//       console.error('Error updating file selection:', error)
+//     }
+//   }
+
+//   return (
+//     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+//       {/* Main Chat Area */}
+//       <div className="flex-1 flex flex-col">
+//         {/* Header */}
+//         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+//           <div className="flex items-center space-x-3">
+//             <button
+//               onClick={onBack}
+//               className="p-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+//             >
+//               ← กลับ
+//             </button>
+//             <div>
+//               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+//                 {sessionName || 'DS Bro - AI Data Scientist'}
+//               </h1>
+//               <p className="text-sm text-gray-500 dark:text-gray-400">AI Data Scientist</p>
+//             </div>
+//           </div>
+//           <button
+//             onClick={clearChat}
+//             className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+//           >
+//             Clear Chat
+//           </button>
+//         </div>
+
+//         {/* Messages Container */}
+//         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+//           {messages.length === 0 ? (
+//             <div className="flex items-center justify-center h-full">
+//               <div className="text-center text-gray-500 dark:text-gray-400">
+//                 <div className="text-4xl mb-4">🤖</div>
+//                 <h2 className="text-xl font-medium mb-2">สวัสดี bro!</h2>
+//                 <p>ผมเป็น DS Bro พร้อมช่วยเหลือคุณในการวิเคราะห์ข้อมูล</p>
+//                 <p className="text-sm mt-2">เปิด "Chat with Data" เพื่อวิเคราะห์ข้อมูลของคุณ</p>
+//               </div>
+//             </div>
+//           ) : (
+//             messages.map((message) => (
+//               <div
+//                 key={message.id}
+//                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+//               >
+//                 <div
+//                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+//                     message.role === 'user'
+//                       ? 'bg-blue-500 text-white'
+//                       : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
+//                   }`}
+//                 >
+//                   {message.role === 'assistant' ? (
+//                     <MarkdownRenderer content={message.content} />
+//                   ) : (
+//                     <p className="whitespace-pre-wrap">{message.content}</p>
+//                   )}
+//                   <p className={`text-xs mt-1 ${
+//                     message.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+//                   }`}>
+//                     {message.timestamp.toLocaleTimeString('th-TH', { 
+//                       hour: '2-digit', 
+//                       minute: '2-digit' 
+//                     })}
+//                   </p>
+//                 </div>
+//               </div>
+//             ))
+//           )}
+          
+//           {/* Loading indicator */}
+//           {isLoading && (
+//             <div className="flex justify-start">
+//               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2">
+//                 <div className="flex space-x-1">
+//                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+//                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+//                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+//                 </div>
+//               </div>
+//             </div>
+//           )}
+          
+//           <div ref={messagesEndRef} />
+//         </div>
+
+//         {/* Input Area */}
+//         <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+//           {/* Chat with Data Toggle */}
+//           <div className="flex items-center justify-between mb-3">
+//             <div className="flex items-center space-x-3">
+//               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Chat with Data</span>
+//               <button
+//                 onClick={() => setChatWithData(!chatWithData)}
+//                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+//                   chatWithData ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+//                 }`}
+//               >
+//                 <span
+//                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+//                     chatWithData ? 'translate-x-6' : 'translate-x-1'
+//                   }`}
+//                 />
+//               </button>
+//             </div>
+//             <div className="flex items-center space-x-2">
+//               <span className="text-xs text-gray-500 dark:text-gray-400">
+//                 {chatWithData ? `เปิดใช้งาน (${selectedFiles.length} ไฟล์)` : 'แชทธรรมดา'}
+//               </span>
+//               {chatWithData && (
+//                 <button
+//                   onClick={() => setShowFileSelector(true)}
+//                   className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+//                 >
+//                   เลือกไฟล์
+//                 </button>
+//               )}
+//             </div>
+//           </div>
+          
+//           <div className="flex space-x-2">
+//             <textarea
+//               value={input}
+//               onChange={(e) => setInput(e.target.value)}
+//               onKeyPress={handleKeyPress}
+//               placeholder={chatWithData ? "ถามเกี่ยวกับข้อมูลของคุณ bro..." : "พิมพ์ข้อความของคุณ bro..."}
+//               className="flex-1 resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+//               rows={1}
+//               disabled={isLoading}
+//             />
+//             <button
+//               onClick={sendMessage}
+//               disabled={!input.trim() || isLoading}
+//               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+//             >
+//               ส่ง
+//             </button>
+//           </div>
+//           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+//             กด Enter เพื่อส่ง, Shift+Enter เพื่อขึ้นบรรทัดใหม่
+//           </p>
+//         </div>
+//       </div>
+
+//       {/* File Selector Modal */}
+//       {showFileSelector && (
+//         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+//           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+//             <div className="flex justify-between items-center mb-4">
+//               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+//                 เลือกไฟล์สำหรับแชท
+//               </h3>
+//               <button 
+//                 onClick={() => setShowFileSelector(false)}
+//                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+//               >
+//                 ✕
+//               </button>
+//             </div>
+            
+//             <div className="max-h-60 overflow-y-auto space-y-2">
+//               {allFiles.map((file) => {
+//                 const isSelected = selectedFiles.some(f => f.file_id === file.file_id)
+//                 return (
+//                   <div key={file.file_id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+//                     <input
+//                       type="checkbox"
+//                       checked={isSelected}
+//                       onChange={() => toggleFileSelection(file.file_id)}
+//                       className="w-4 h-4 text-blue-600 rounded"
+//                     />
+//                     <div className="flex-1 min-w-0">
+//                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+//                         {file.filename}
+//                       </p>
+//                       <p className="text-xs text-gray-500 dark:text-gray-400">
+//                         {file.file_type}
+//                       </p>
+//                     </div>
+//                   </div>
+//                 )
+//               })}
+//             </div>
+            
+//             <div className="mt-4 flex justify-end">
+//               <button
+//                 onClick={() => setShowFileSelector(false)}
+//                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+//               >
+//                 เสร็จ
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   )
+// }
