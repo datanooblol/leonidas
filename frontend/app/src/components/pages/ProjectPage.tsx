@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { ProjectTemplate } from '../templates/ProjectTemplate'
 import { ProjectContent } from '../organisms/ProjectContent'
 import { Spinner } from '../atoms/Spinner'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 
 interface ProjectData {
   project_id: string

@@ -6,7 +6,7 @@ import { ChatArea } from '../organisms/ChatArea'
 import { UploadStatus } from '../molecules/UploadStatus'
 import { NewChatModal } from '../molecules/NewChatModal'
 import { FileMetadataModal } from '../organisms/FileMetadataModal'
-import { apiService, getLastUsedModel } from '../../../lib/api'
+import { apiService, getLastUsedModel } from '../../../api/api'
 
 interface ProjectData {
   project_id: string

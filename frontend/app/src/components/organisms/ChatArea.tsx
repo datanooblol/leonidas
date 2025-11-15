@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChatInput } from '../molecules/ChatInput'
 import { MarkdownRenderer } from './MarkdownRenderer'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 import React from 'react'
 
 interface Message {

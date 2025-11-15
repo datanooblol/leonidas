@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { InputField } from '../molecules/InputField'
 import { RegisterButtons } from '../molecules/RegisterButtons'
 import { ErrorMessage } from '../atoms/ErrorMessage'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 
 export const RegisterForm = ({ onSwitchToLogin }: { onSwitchToLogin: () => void }) => {
   const [email, setEmail] = useState('')

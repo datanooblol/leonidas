@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { MarkdownRenderer } from '../organisms/MarkdownRenderer'
 import { ArtifactViewer } from './ArtifactViewer'
-import { apiService } from '../../lib/api'
+import { apiService } from '../../api/api'
 
 interface Message {
   id: string

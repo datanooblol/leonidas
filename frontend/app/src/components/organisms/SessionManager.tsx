@@ -4,7 +4,7 @@ import { Heading } from '../atoms/Heading'
 import { Button } from '../atoms/Button'
 import { CreateSessionForm } from '../molecules/CreateSessionForm'
 import { SessionItem } from '../molecules/SessionItem'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 
 interface SessionData {
   session_id: string

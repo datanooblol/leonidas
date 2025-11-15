@@ -4,7 +4,7 @@ import { Heading } from '../atoms/Heading'
 import { FileUploadButton } from '../molecules/FileUploadButton'
 import { FileManagerItem } from '../molecules/FileManagerItem'
 import { UploadStatus } from '../molecules/UploadStatus'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 import { MetadataModal } from './MetadataModal'
 
 interface FileData {

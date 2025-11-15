@@ -4,7 +4,7 @@ import { ChatTemplate } from '../templates/ChatTemplate'
 import { ChatArea } from '../organisms/ChatArea'
 import { ProjectChatSidebar } from '../organisms/ProjectChatSidebar'
 import { MetadataModal } from '../organisms/MetadataModal'
-import { apiService, getLastUsedModel } from '../../../lib/api'
+import { apiService, getLastUsedModel } from '../../../api/api'
 
 interface Message {
   id: string

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 
 interface Column {
   column: string

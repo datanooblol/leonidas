@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { HomePage } from '../../src/components/pages/HomePage'
-import { apiService } from '../../lib/api'
+import { apiService } from '../../api/api'
 
 export default function Dashboard() {
   const [userEmail, setUserEmail] = useState('')
