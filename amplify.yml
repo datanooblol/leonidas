@@ -9,9 +9,9 @@ frontend:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: frontend/out
+    baseDirectory: frontend/.next
     files:
-      - '**/*'
+      - "**/*"
   cache:
     paths:
       - frontend/node_modules/**/*
