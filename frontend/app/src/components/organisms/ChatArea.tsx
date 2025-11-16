@@ -1,32 +1,32 @@
-import { useState, useEffect, useRef } from 'react'
-import { ChatInput } from '../molecules/ChatInput'
-import { MarkdownRenderer } from './MarkdownRenderer'
-import { apiService } from '../../../api/api'
-import React from 'react'
+import { useState, useEffect, useRef } from "react";
+import { ChatInput } from "../molecules/ChatInput";
+import { MarkdownRenderer } from "./MarkdownRenderer";
+import { apiService } from "../../../api/api";
+import React from "react";
 
 interface Message {
-  id: string
-  content: string
-  role: 'user' | 'assistant'
-  timestamp: Date
-  artifacts?: any[]
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  timestamp: Date;
+  artifacts?: any[];
 }
 
 interface ChatAreaProps {
-  messages: Message[]
-  input: string
-  isLoading: boolean
-  currentSession: string | null
-  selectedFilesCount: number
-  useFileData: boolean
-  onInputChange: (value: string) => void
-  onSendMessage: () => void
-  onToggleSidebar: () => void
-  onToggleFileData: () => void
-  onBack: () => void
-  selectedModel?: string
-  availableModels?: string[]
-  onModelChange?: (model: string) => void
+  messages: Message[];
+  input: string;
+  isLoading: boolean;
+  currentSession: string | null;
+  selectedFilesCount: number;
+  useFileData: boolean;
+  onInputChange: (value: string) => void;
+  onSendMessage: () => void;
+  onToggleSidebar: () => void;
+  onToggleFileData: () => void;
+  onBack: () => void;
+  selectedModel?: string;
+  availableModels?: string[];
+  onModelChange?: (model: string) => void;
 }
 
 export const ChatArea = ({
@@ -43,41 +43,48 @@ export const ChatArea = ({
   onBack,
   selectedModel = "OPENAI_20b_BR",
   availableModels = [],
-  onModelChange
+  onModelChange,
 }: ChatAreaProps) => {
-  const [artifacts, setArtifacts] = useState<{[messageId: string]: any[]}>({})
-  const [loadingArtifacts, setLoadingArtifacts] = useState<Set<string>>(new Set())
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [artifacts, setArtifacts] = useState<{ [messageId: string]: any[] }>(
+    {}
+  );
+  const [loadingArtifacts, setLoadingArtifacts] = useState<Set<string>>(
+    new Set()
+  );
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
   const handleViewArtifacts = async (messageId: string) => {
-    if (artifacts[messageId]) return
-    
-    setLoadingArtifacts(prev => new Set(prev).add(messageId))
+    if (artifacts[messageId]) return;
+
+    setLoadingArtifacts((prev) => new Set(prev).add(messageId));
     try {
-      const data = await apiService.getArtifacts(messageId)
-      setArtifacts(prev => ({ ...prev, [messageId]: data.artifacts || [] }))
+      const data = await apiService.getArtifacts(messageId);
+      setArtifacts((prev) => ({ ...prev, [messageId]: data.artifacts || [] }));
     } catch (error) {
-      console.error('Failed to load artifacts:', error)
-      setArtifacts(prev => ({ ...prev, [messageId]: [] }))
+      console.error("Failed to load artifacts:", error);
+      setArtifacts((prev) => ({ ...prev, [messageId]: [] }));
     } finally {
-      setLoadingArtifacts(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(messageId)
-        return newSet
-      })
+      setLoadingArtifacts((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(messageId);
+        return newSet;
+      });
     }
-  }
+  };
 
   return (
     <div className="flex-1 flex flex-col relative">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <button onClick={onBack} className="text-gray-600 hover:text-gray-800">
+          <button
+            onClick={onBack}
+            className="text-gray-600 hover:text-gray-800"
+          >
             🏠 Dashboard
           </button>
         </div>
@@ -95,9 +102,14 @@ export const ChatArea = ({
           </div>
         ) : (
           <div className="space-y-4 max-w-5xl mx-auto">
-            {messages.map(message => (
-              <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {message.role === 'user' ? (
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${
+                  message.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                {message.role === "user" ? (
                   <div className="max-w-xs lg:max-w-2xl px-4 py-2 rounded-lg bg-gray-200 text-gray-800">
                     {message.content}
                   </div>
@@ -114,39 +126,68 @@ export const ChatArea = ({
                         className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
                         disabled={loadingArtifacts.has(message.id)}
                       >
-                        {loadingArtifacts.has(message.id) ? 'Loading...' : 'View Source'}
+                        {loadingArtifacts.has(message.id)
+                          ? "Loading..."
+                          : "View Source"}
                       </button>
                     </div>
 
                     {/* Loaded Artifacts */}
                     {artifacts[message.id] !== undefined && (
                       <div className="mt-3">
-                        {artifacts[message.id] && artifacts[message.id].length > 0 ? (
+                        {artifacts[message.id] &&
+                        artifacts[message.id].length > 0 ? (
                           <div className="space-y-2">
                             {artifacts[message.id].map((artifact, idx) => (
-                              <div key={idx} className="p-3 bg-gray-50 border border-gray-200 rounded">
-                                <h4 className="text-sm font-medium mb-2">{artifact.title || `Artifact ${idx + 1}`}</h4>
-                                {artifact.type === 'results' ? (
+                              <div
+                                key={idx}
+                                className="p-3 bg-gray-50 border border-gray-200 rounded"
+                              >
+                                <h4 className="text-sm font-medium mb-2">
+                                  {artifact.title || `Artifact ${idx + 1}`}
+                                </h4>
+                                {artifact.type === "results" ? (
                                   <div className="text-xs overflow-x-auto">
                                     <table className="min-w-full border border-gray-300 text-xs">
                                       <tbody>
-                                        {artifact.content.split('\n').filter(row => row.trim() && !row.includes('---')).map((row, idx) => {
-                                          const cells = row.split('|').slice(1, -1); // Remove first and last empty cells
-                                          const filteredCells = cells.slice(1); // Remove first column (index)
-                                          return (
-                                            <tr key={idx} className={idx === 0 ? 'bg-gray-100 font-medium' : ''}>
-                                              {filteredCells.map((cell, cellIdx) => (
-                                                <td key={cellIdx} className="border border-gray-300 px-2 py-1">
-                                                  {cell.trim()}
-                                                </td>
-                                              ))}
-                                            </tr>
+                                        {artifact.content
+                                          .split("\n")
+                                          .filter(
+                                            (row: string) =>
+                                              row.trim() && !row.includes("---")
                                           )
-                                        })}
+                                          .map((row: string, idx: number) => {
+                                            const cells = row
+                                              .split("|")
+                                              .slice(1, -1); // Remove first and last empty cells
+                                            const filteredCells =
+                                              cells.slice(1); // Remove first column (index)
+                                            return (
+                                              <tr
+                                                key={idx}
+                                                className={
+                                                  idx === 0
+                                                    ? "bg-gray-100 font-medium"
+                                                    : ""
+                                                }
+                                              >
+                                                {filteredCells.map(
+                                                  (cell, cellIdx) => (
+                                                    <td
+                                                      key={cellIdx}
+                                                      className="border border-gray-300 px-2 py-1"
+                                                    >
+                                                      {cell.trim()}
+                                                    </td>
+                                                  )
+                                                )}
+                                              </tr>
+                                            );
+                                          })}
                                       </tbody>
                                     </table>
                                   </div>
-                                ) : artifact.type === 'chart' ? (
+                                ) : artifact.type === "chart" ? (
                                   <div className="w-full">
                                     <iframe
                                       srcDoc={`
@@ -165,7 +206,7 @@ export const ChatArea = ({
                                         </html>
                                       `}
                                       className="w-full border border-gray-200 rounded"
-                                      style={{ height: '400px' }}
+                                      style={{ height: "400px" }}
                                       title="Chart"
                                     />
                                   </div>
@@ -222,5 +263,5 @@ export const ChatArea = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

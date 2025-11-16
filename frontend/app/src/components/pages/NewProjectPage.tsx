@@ -1,368 +1,419 @@
-'use client'
-import { useState, useEffect } from 'react'
-import { ChatTemplate } from '../templates/ChatTemplate'
-import { ProjectChatSidebar } from '../organisms/ProjectChatSidebar'
-import { ChatArea } from '../organisms/ChatArea'
-import { UploadStatus } from '../molecules/UploadStatus'
-import { NewChatModal } from '../molecules/NewChatModal'
-import { FileMetadataModal } from '../organisms/FileMetadataModal'
-import { apiService, getLastUsedModel } from '../../../api/api'
+"use client";
+import { FileData } from "../../../../types";
+import { useState, useEffect } from "react";
+import { ChatTemplate } from "../templates/ChatTemplate";
+import { ProjectChatSidebar } from "../organisms/ProjectChatSidebar";
+import { ChatArea } from "../organisms/ChatArea";
+import { UploadStatus } from "../molecules/UploadStatus";
+import { NewChatModal } from "../molecules/NewChatModal";
+import { FileMetadataModal } from "../organisms/FileMetadataModal";
+import { apiService, getLastUsedModel } from "../../../api/api";
 
 interface ProjectData {
-  project_id: string
-  name: string
-  description: string
-  created_at: string
-  updated_at: string
+  project_id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface SessionData {
-  session_id: string
-  project_id: string
-  name: string
-  created_at: string
-  updated_at: string
+  session_id: string;
+  project_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
 }
 
-interface FileData {
-  file_id: string
-  project_id: string
-  filename: string
-  size: number
-  file_type: string
-  created_at: string
-  selected?: boolean
-}
+// interface FileData {
+//   file_id: string
+//   project_id: string
+//   filename: string
+//   size: number
+//   file_type: string
+//   created_at: string
+//   selected?: boolean
+// }
 
 interface Message {
-  id: string
-  content: string
-  role: 'user' | 'assistant'
-  timestamp: Date
-  artifacts?: any[]
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  timestamp: Date;
+  artifacts?: any[];
 }
 
 interface Column {
-  column: string
-  dtype: string
-  input_type: string
-  description: string | null
-  summary: string | null
+  column: string;
+  dtype: string;
+  input_type: string;
+  description: string | null;
+  // summary: string | null;
 }
 
 interface FileMetadata {
-  file_id: string
-  project_id: string
-  filename: string
-  size: number
-  status: string
-  source: string
-  selected: boolean
-  created_at: string
-  updated_at: string
-  name: string
-  description: string
-  columns: Column[]
+  file_id: string;
+  project_id: string;
+  filename: string;
+  size: number;
+  status: string;
+  source: string;
+  selected: boolean;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  description: string;
+  columns: Column[];
 }
 
 interface NewProjectPageProps {
-  project: ProjectData
-  onBack: () => void
+  project: ProjectData;
+  onBack: () => void;
 }
 
 export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
-  const [useFileData, setUseFileData] = useState(false)
-  const [sessions, setSessions] = useState<SessionData[]>([])
-  const [files, setFiles] = useState<FileData[]>([])
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [showUploadStatus, setShowUploadStatus] = useState(false)
-  const [showNewChatModal, setShowNewChatModal] = useState(false)
-  const [isCreatingChat, setIsCreatingChat] = useState(false)
-  const [showMetadataModal, setShowMetadataModal] = useState(false)
-  const [currentMetadata, setCurrentMetadata] = useState<FileMetadata | null>(null)
-  const [availableModels, setAvailableModels] = useState<string[]>([])
-  const [selectedModel, setSelectedModel] = useState<string>("OPENAI_20b_BR")
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [useFileData, setUseFileData] = useState(false);
+  const [sessions, setSessions] = useState<SessionData[]>([]);
+  const [files, setFiles] = useState<FileData[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showUploadStatus, setShowUploadStatus] = useState(false);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [showMetadataModal, setShowMetadataModal] = useState(false);
+  const [currentMetadata, setCurrentMetadata] = useState<FileMetadata | null>(
+    null
+  );
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>("OPENAI_20b_BR");
 
   useEffect(() => {
-    loadProjectData()
-    loadAvailableModels()
-  }, [project.project_id])
+    loadProjectData();
+    loadAvailableModels();
+  }, [project.project_id]);
 
   useEffect(() => {
     if (currentSessionId) {
-      loadChatHistory()
+      loadChatHistory();
     } else {
-      setMessages([])
+      setMessages([]);
     }
-  }, [currentSessionId])
+  }, [currentSessionId]);
 
   // Update selected model when chat history loads
   useEffect(() => {
     if (messages.length > 0 && availableModels.length > 0) {
-      const lastModel = getLastUsedModel(messages.map(msg => ({
-        message_id: msg.id,
-        content: msg.content,
-        role: msg.role,
-        created_at: msg.timestamp.toISOString(),
-        model_name: (msg as any).model_name
-      })), availableModels)
-      setSelectedModel(lastModel)
+      const lastModel = getLastUsedModel(
+        messages.map((msg) => ({
+          message_id: msg.id,
+          content: msg.content,
+          role: msg.role,
+          created_at: msg.timestamp.toISOString(),
+          model_name: (msg as any).model_name,
+        })),
+        availableModels
+      );
+      setSelectedModel(lastModel);
     }
-  }, [messages, availableModels])
+  }, [messages, availableModels]);
 
   // Clear selected files when useFileData is turned off
   useEffect(() => {
     if (!useFileData) {
-      setSelectedFiles([])
-      setFiles(prev => prev.map(file => ({ ...file, selected: false })))
+      setSelectedFiles([]);
+      setFiles((prev) => prev.map((file) => ({ ...file, selected: false })));
     }
-  }, [useFileData])
+  }, [useFileData]);
 
   // Sync selectedFiles with files selected property
   useEffect(() => {
-    const selectedIds = files.filter(file => file.selected).map(file => file.file_id)
-    setSelectedFiles(selectedIds)
-  }, [files])
+    const selectedIds = files
+      .filter((file) => file.selected)
+      .map((file) => file.file_id);
+    setSelectedFiles(selectedIds);
+  }, [files]);
 
   const loadProjectData = async () => {
     try {
       const [sessionsData, filesData] = await Promise.all([
         apiService.getSessions(project.project_id),
-        apiService.getFiles(project.project_id)
-      ])
-      
-      setSessions(sessionsData)
+        apiService.getFiles(project.project_id),
+      ]);
+
+      setSessions(sessionsData);
       // Use selected property from API response
-      const filesWithSelection = filesData.map(file => ({
+      const filesWithSelection = filesData.map((file) => ({
         ...file,
-        selected: file.selected === true // Ensure boolean value
-      }))
-      setFiles(filesWithSelection)
+        selected: file.selected === true, // Ensure boolean value
+      }));
+      setFiles(filesWithSelection);
     } catch (error) {
-      console.error('Failed to load project data:', error)
+      console.error("Failed to load project data:", error);
     }
-  }
+  };
 
   const loadAvailableModels = async () => {
     try {
-      const data = await apiService.getAvailableModels()
-      setAvailableModels(data.models)
+      const data = await apiService.getAvailableModels();
+      setAvailableModels(data.models);
       if (data.models.length > 0 && !selectedModel) {
-        setSelectedModel(data.models[0])
+        setSelectedModel(data.models[0]);
       }
     } catch (error) {
-      console.error('Failed to load available models:', error)
+      console.error("Failed to load available models:", error);
     }
-  }
+  };
 
   const loadChatHistory = async () => {
-    if (!currentSessionId) return
-    
+    if (!currentSessionId) return;
+
     try {
-      const history = await apiService.getChatHistory(currentSessionId)
-      const formattedMessages: Message[] = (history.messages || []).map(msg => ({
-        id: msg.message_id,
-        content: msg.content,
-        role: msg.role,
-        timestamp: new Date(msg.created_at),
-        model_name: msg.model_name
-      } as any))
-      
-      setMessages(formattedMessages)
+      const history = await apiService.getChatHistory(currentSessionId);
+      const formattedMessages: Message[] = (history.messages || []).map(
+        (msg) =>
+          ({
+            id: msg.message_id,
+            content: msg.content,
+            role: msg.role,
+            timestamp: new Date(msg.created_at),
+            model_name: msg.model_name,
+          } as any)
+      );
+
+      setMessages(formattedMessages);
     } catch (error) {
-      console.error('Error loading chat history:', error)
+      console.error("Error loading chat history:", error);
     }
-  }
+  };
 
   const handleToggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed)
-  }
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
 
   const handleFileSelect = async (fileId: string) => {
-    if (!useFileData) return
-    
-    const file = files.find(f => f.file_id === fileId)
-    if (!file) return
-    
-    const newSelected = !file.selected
-    
+    if (!useFileData) return;
+
+    const file = files.find((f) => f.file_id === fileId);
+    if (!file) return;
+
+    const newSelected = !file.selected;
+
     try {
-      await apiService.updateFileSelection(fileId, newSelected)
-      
-      setFiles(prev => prev.map(f => 
-        f.file_id === fileId 
-          ? { ...f, selected: newSelected }
-          : f
-      ))
+      await apiService.updateFileSelection(fileId, newSelected);
+
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.file_id === fileId ? { ...f, selected: newSelected } : f
+        )
+      );
     } catch (error) {
-      console.error('Failed to update file selection:', error)
+      console.error("Failed to update file selection:", error);
     }
-  }
+  };
 
   const handleToggleFileData = () => {
-    setUseFileData(!useFileData)
-  }
+    setUseFileData(!useFileData);
+  };
 
   const handleFileUpload = async (fileList: FileList) => {
-    setIsUploading(true)
-    
+    setIsUploading(true);
+
     try {
-      const uploadPromises = Array.from(fileList).map(file => 
+      const uploadPromises = Array.from(fileList).map((file) =>
         apiService.uploadFile(project.project_id, file)
-      )
-      
-      await Promise.all(uploadPromises)
-      
+      );
+
+      await Promise.all(uploadPromises);
+
       // Reload files after upload
-      const filesData = await apiService.getFiles(project.project_id)
-      const filesWithSelection = filesData.map(file => ({
+      const filesData = await apiService.getFiles(project.project_id);
+      const filesWithSelection = filesData.map((file) => ({
         ...file,
-        selected: file.selected === true // Ensure boolean value
-      }))
-      setFiles(filesWithSelection)
-      
-      setShowUploadStatus(true)
-      setTimeout(() => setShowUploadStatus(false), 3000)
-      
+        selected: file.selected === true, // Ensure boolean value
+      }));
+      setFiles(filesWithSelection);
+
+      setShowUploadStatus(true);
+      setTimeout(() => setShowUploadStatus(false), 3000);
     } catch (error) {
-      console.error('Failed to upload files:', error)
+      console.error("Failed to upload files:", error);
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleNewChat = () => {
-    setShowNewChatModal(true)
-  }
+    setShowNewChatModal(true);
+  };
 
   const handleCreateChat = async (chatName: string) => {
-    setIsCreatingChat(true)
-    
+    setIsCreatingChat(true);
+
     try {
-      const newSession = await apiService.createSession(project.project_id, chatName)
-      setSessions(prev => [newSession, ...prev])
-      setCurrentSessionId(newSession.session_id)
-      setMessages([])
-      setInput('')
-      setShowNewChatModal(false)
+      const newSession = await apiService.createSession(
+        project.project_id,
+        chatName
+      );
+      setSessions((prev) => [newSession, ...prev]);
+      setCurrentSessionId(newSession.session_id);
+      setMessages([]);
+      setInput("");
+      setShowNewChatModal(false);
     } catch (error) {
-      console.error('Failed to create session:', error)
+      console.error("Failed to create session:", error);
     } finally {
-      setIsCreatingChat(false)
+      setIsCreatingChat(false);
     }
-  }
+  };
 
   const handleUpdateSession = async (sessionId: string, name: string) => {
     try {
-      const updatedSession = await apiService.updateSession(sessionId, name)
-      setSessions(prev => prev.map(s => 
-        s.session_id === sessionId ? { ...s, name: updatedSession.name } : s
-      ))
+      const updatedSession = await apiService.updateSession(sessionId, name);
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.session_id === sessionId ? { ...s, name: updatedSession.name } : s
+        )
+      );
     } catch (error) {
-      console.error('Failed to update session:', error)
+      console.error("Failed to update session:", error);
     }
-  }
+  };
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      await apiService.deleteSession(sessionId)
-      setSessions(prev => prev.filter(s => s.session_id !== sessionId))
-      
+      await apiService.deleteSession(sessionId);
+      setSessions((prev) => prev.filter((s) => s.session_id !== sessionId));
+
       // If deleting current session, clear it
       if (currentSessionId === sessionId) {
-        setCurrentSessionId(null)
-        setMessages([])
+        setCurrentSessionId(null);
+        setMessages([]);
       }
     } catch (error) {
-      console.error('Failed to delete session:', error)
+      console.error("Failed to delete session:", error);
     }
-  }
+  };
 
+  // const handleViewMetadata = async (fileId: string) => {
+  //   try {
+  //     const metadata = await apiService.getFileMetadata(fileId);
+  //     setCurrentMetadata(metadata);
+  //     setShowMetadataModal(true);
+  //   } catch (error) {
+  //     console.error("Failed to get metadata:", error);
+  //     alert("Failed to load file metadata");
+  //   }
+  // };
   const handleViewMetadata = async (fileId: string) => {
     try {
-      const metadata = await apiService.getFileMetadata(fileId)
-      setCurrentMetadata(metadata)
-      setShowMetadataModal(true)
+      const metadata = await apiService.getFileMetadata(fileId);
+      const file = files.find((f) => f.file_id === fileId);
+
+      // Transform API response to match local FileMetadata interface
+      const transformedMetadata: FileMetadata = {
+        file_id: fileId,
+        project_id: file?.project_id || "",
+        filename: file?.filename || "",
+        size: file?.file_size || 0,
+        status: "active",
+        source: "upload",
+        selected: file?.selected || false,
+        created_at: file?.created_at || "",
+        updated_at: file?.created_at || "",
+        name: metadata.name || "",
+        description: metadata.description || "",
+        columns: metadata.columns || [],
+      };
+
+      setCurrentMetadata(transformedMetadata);
+      setShowMetadataModal(true);
     } catch (error) {
-      console.error('Failed to get metadata:', error)
-      alert('Failed to load file metadata')
+      console.error("Failed to get metadata:", error);
+      alert("Failed to load file metadata");
     }
-  }
+  };
 
   const handleSaveMetadata = async (metadata: FileMetadata) => {
     try {
-      await apiService.updateFileMetadata(metadata.file_id, metadata)
-      console.log('Metadata updated successfully')
+      await apiService.updateFileMetadata(metadata.file_id, metadata);
+      console.log("Metadata updated successfully");
     } catch (error) {
-      console.error('Failed to update metadata:', error)
-      alert('Failed to save metadata')
+      console.error("Failed to update metadata:", error);
+      alert("Failed to save metadata");
     }
-  }
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('user_email')
-    window.location.href = '/login'
-  }
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user_email");
+    window.location.href = "/login";
+  };
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading || !currentSessionId) return
+    if (!input.trim() || isLoading || !currentSessionId) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input,
-      role: 'user',
-      timestamp: new Date()
-    }
+      role: "user",
+      timestamp: new Date(),
+    };
 
-    setMessages(prev => [...prev, userMessage])
-    const messageContent = input
-    setInput('')
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    const messageContent = input;
+    setInput("");
+    setIsLoading(true);
 
     try {
-      const response = await apiService.sendMessage(currentSessionId, messageContent, useFileData, selectedModel)
+      const response = await apiService.sendMessage(
+        currentSessionId,
+        messageContent,
+        useFileData,
+        selectedModel
+      );
       const assistantMessage: Message = {
         id: response.id,
         content: response.content,
-        role: 'assistant',
+        role: "assistant",
         timestamp: new Date(),
         artifacts: response.artifacts,
-        model_name: response.model_name
-      } as any
+        model_name: response.model_name,
+      } as any;
 
-      setMessages(prev => [...prev, assistantMessage])
-      
+      setMessages((prev) => [...prev, assistantMessage]);
+
       // อัพเดท selectedModel จาก response
-      console.log('🔍 Debug Model Update:')
-      console.log('- Response model_name:', response.model_name)
-      console.log('- Available models:', availableModels)
-      console.log('- Current selected:', selectedModel)
-      
-      if (response.model_name && availableModels.includes(response.model_name)) {
-        console.log('✅ Updating selectedModel to:', response.model_name)
-        setSelectedModel(response.model_name)
+      console.log("🔍 Debug Model Update:");
+      console.log("- Response model_name:", response.model_name);
+      console.log("- Available models:", availableModels);
+      console.log("- Current selected:", selectedModel);
+
+      if (
+        response.model_name &&
+        availableModels.includes(response.model_name)
+      ) {
+        console.log("✅ Updating selectedModel to:", response.model_name);
+        setSelectedModel(response.model_name);
       } else {
-        console.log('❌ Not updating selectedModel')
+        console.log("❌ Not updating selectedModel");
       }
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error("Error sending message:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSessionSelect = (sessionId: string) => {
-    setCurrentSessionId(sessionId)
-  }
+    setCurrentSessionId(sessionId);
+  };
 
-  const userEmail = localStorage.getItem('user_email') 
+  const userEmail = localStorage.getItem("user_email");
 
   return (
     <>
@@ -376,8 +427,8 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
       <FileMetadataModal
         metadata={currentMetadata}
         onClose={() => {
-          setShowMetadataModal(false)
-          setCurrentMetadata(null)
+          setShowMetadataModal(false);
+          setCurrentMetadata(null);
         }}
         onSave={handleSaveMetadata}
       />
@@ -389,7 +440,7 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
             files={files}
             sessions={sessions}
             currentSessionId={currentSessionId}
-            userEmail={userEmail}
+            userEmail={userEmail || ""}
             isUploading={isUploading}
             useFileData={useFileData}
             onFileSelect={handleFileSelect}
@@ -423,5 +474,5 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
         }
       />
     </>
-  )
-}
+  );
+};

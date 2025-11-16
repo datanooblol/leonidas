@@ -1,162 +1,237 @@
-'use client'
-import { useState, useEffect } from 'react'
-import { ChatTemplate } from '../templates/ChatTemplate'
-import { ChatArea } from '../organisms/ChatArea'
-import { ProjectChatSidebar } from '../organisms/ProjectChatSidebar'
-import { MetadataModal } from '../organisms/MetadataModal'
-import { apiService, getLastUsedModel } from '../../../api/api'
+"use client";
+import { FileData, FileMetadata } from "../../../../types";
+import { useState, useEffect } from "react";
+import { ChatTemplate } from "../templates/ChatTemplate";
+import { ChatArea } from "../organisms/ChatArea";
+import { ProjectChatSidebar } from "../organisms/ProjectChatSidebar";
+import { MetadataModal } from "../organisms/MetadataModal";
+import { apiService, getLastUsedModel } from "../../../api/api";
 
 interface Message {
-  id: string
-  content: string
-  role: 'user' | 'assistant'
-  timestamp: Date
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  timestamp: Date;
 }
 
-interface FileData {
-  file_id: string
-  project_id: string
-  filename: string
-  size: number
-  file_type?: string
-  status: string
-  source: string
-  selected: boolean
-  created_at: string
-}
+// interface FileData {
+//   file_id: string;
+//   project_id: string;
+//   filename: string;
+//   size: number;
+//   file_type?: string;
+//   status: string;
+//   source: string;
+//   selected: boolean;
+//   created_at: string;
+// }
 
-interface FileMetadata {
-  file_id: string
-  filename: string
-  file_type: string
-  rows?: number
-  columns?: any[]
-  preview?: Record<string, any>[]
-}
+// interface FileMetadata {
+//   file_id: string;
+//   filename: string;
+//   file_type: string;
+//   rows?: number;
+//   columns?: any[];
+//   preview?: Record<string, any>[];
+// }
 
 interface ChatPageProps {
-  projectId: string
-  sessionId: string
-  onBack: () => void
+  projectId: string;
+  sessionId: string;
+  onBack: () => void;
 }
 
 export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [files, setFiles] = useState<FileData[]>([])
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [fileMetadata, setFileMetadata] = useState<Record<string, FileMetadata>>({})
-  const [showMetadata, setShowMetadata] = useState<string | null>(null)
-  const [showPreview, setShowPreview] = useState<string | null>(null)
-  const [chatWithData, setChatWithData] = useState(false)
-  const [selectedModel, setSelectedModel] = useState("OPENAI_20b_BR")
-  const [availableModels, setAvailableModels] = useState<string[]>([])
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [files, setFiles] = useState<FileData[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [fileMetadata, setFileMetadata] = useState<
+    Record<string, FileMetadata>
+  >({});
+  const [showMetadata, setShowMetadata] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState<string | null>(null);
+  const [chatWithData, setChatWithData] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("OPENAI_20b_BR");
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
 
   useEffect(() => {
-    loadData()
-    loadModels()
-  }, [sessionId, projectId])
+    loadData();
+    loadModels();
+  }, [sessionId, projectId]);
 
   useEffect(() => {
     if (availableModels.length > 0) {
-      loadData()
+      loadData();
     }
-  }, [availableModels])
+  }, [availableModels]);
 
   const loadModels = async () => {
     try {
-      const { models } = await apiService.getAvailableModels()
-      setAvailableModels(models)
+      const { models } = await apiService.getAvailableModels();
+      setAvailableModels(models);
       if (models.length > 0) {
-        setSelectedModel(models[0])
+        setSelectedModel(models[0]);
       }
     } catch (error) {
-      console.error('Error loading models:', error)
+      console.error("Error loading models:", error);
     }
-  }
+  };
 
+  // const loadData = async () => {
+  //   try {
+  //     const [history, filesData] = await Promise.all([
+  //       apiService.getChatHistory(sessionId),
+  //       apiService.getFiles(projectId)
+  //     ])
+
+  //     const formattedMessages: Message[] = (history.messages || []).map(msg => ({
+  //       id: msg.message_id,
+  //       content: msg.content,
+  //       role: msg.role,
+  //       timestamp: new Date(msg.created_at)      }))
+
+  //     setMessages(formattedMessages)
+  //     setFiles(filesData)
+
+  //     if (availableModels.length > 0) {
+  //       const lastModel = getLastUsedModel(history.messages || [], availableModels)
+  //       setSelectedModel(lastModel)
+  //     }
+  //   } catch (error) {
+  //     console.error('Error loading data:', error)
+  //   }
+  // }
   const loadData = async () => {
     try {
       const [history, filesData] = await Promise.all([
         apiService.getChatHistory(sessionId),
-        apiService.getFiles(projectId)
-      ])
-      
-      const formattedMessages: Message[] = (history.messages || []).map(msg => ({
-        id: msg.message_id,
-        content: msg.content,
-        role: msg.role,
-        timestamp: new Date(msg.created_at)      }))
-      
-      setMessages(formattedMessages)
-      setFiles(filesData)
-      
+        apiService.getFiles(projectId),
+      ]);
+
+      const formattedMessages: Message[] = (history.messages || []).map(
+        (msg) => ({
+          id: msg.message_id,
+          content: msg.content,
+          role: msg.role,
+          timestamp: new Date(msg.created_at),
+        })
+      );
+
+      // Transform API response to match component interface
+      const formattedFiles: FileData[] = filesData.map((file) => ({
+        file_id: file.file_id,
+        project_id: file.project_id,
+        filename: file.filename,
+        file_size: file.file_size, // Map file_size to size
+        file_type: file.file_type,
+        status: "active",
+        source: "upload",
+        selected: file.selected || false,
+        created_at: file.created_at,
+      }));
+
+      setMessages(formattedMessages);
+      setFiles(formattedFiles); // Use transformed data
+
       if (availableModels.length > 0) {
-        const lastModel = getLastUsedModel(history.messages || [], availableModels)
-        setSelectedModel(lastModel)
+        const lastModel = getLastUsedModel(
+          history.messages || [],
+          availableModels
+        );
+        setSelectedModel(lastModel);
       }
     } catch (error) {
-      console.error('Error loading data:', error)
+      console.error("Error loading data:", error);
     }
-  }
+  };
 
+  // const loadFileMetadata = async (fileId: string) => {
+  //   try {
+  //     const metadata = await apiService.getFileMetadata(fileId);
+  //     setFileMetadata((prev) => ({ ...prev, [fileId]: metadata }));
+  //   } catch (error) {
+  //     console.error("Failed to load metadata:", error);
+  //   }
+  // };
   const loadFileMetadata = async (fileId: string) => {
     try {
-      const metadata = await apiService.getFileMetadata(fileId)
-      setFileMetadata(prev => ({ ...prev, [fileId]: metadata }))
+      const metadata = await apiService.getFileMetadata(fileId);
+      const file = files.find((f) => f.file_id === fileId);
+
+      // Create a complete metadata object
+      const completeMetadata: FileMetadata = {
+        file_id: fileId,
+        filename: file?.filename || "",
+        file_type: file?.file_type || "",
+        size: file?.file_size || 0, // Add the missing size property
+        rows: metadata.rows,
+        columns: metadata.columns,
+        preview: metadata.preview,
+        ...metadata,
+      };
+      setFileMetadata((prev) => ({ ...prev, [fileId]: completeMetadata }));
     } catch (error) {
-      console.error('Failed to load metadata:', error)
+      console.error("Failed to load metadata:", error);
     }
-  }
+  };
 
   const handleMetadataSave = (updatedMetadata: FileMetadata) => {
-    setFileMetadata(prev => ({ ...prev, [updatedMetadata.file_id]: updatedMetadata }))
-  }
+    setFileMetadata((prev) => ({
+      ...prev,
+      [updatedMetadata.file_id]: updatedMetadata,
+    }));
+  };
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input,
-      role: 'user',
-      timestamp: new Date()
-    }
+      role: "user",
+      timestamp: new Date(),
+    };
 
-    setMessages(prev => [...prev, userMessage])
-    const messageContent = input
-    setInput('')
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    const messageContent = input;
+    setInput("");
+    setIsLoading(true);
 
     try {
-      const response = await apiService.sendMessage(sessionId, messageContent, chatWithData, selectedModel)
+      const response = await apiService.sendMessage(
+        sessionId,
+        messageContent,
+        chatWithData,
+        selectedModel
+      );
       const assistantMessage: Message = {
         id: response.id,
         content: response.content,
-        role: 'assistant',
-        timestamp: new Date()
-      }
+        role: "assistant",
+        timestamp: new Date(),
+      };
 
-      setMessages(prev => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error("Error sending message:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleViewMetadata = (fileId: string) => {
-    loadFileMetadata(fileId)
-    setShowMetadata(fileId)
-  }
+    loadFileMetadata(fileId);
+    setShowMetadata(fileId);
+  };
 
   const handleViewPreview = (fileId: string) => {
-    loadFileMetadata(fileId)
-    setShowPreview(fileId)
-  }
+    loadFileMetadata(fileId);
+    setShowPreview(fileId);
+  };
 
-  const selectedFilesCount = files.filter(f => f.selected).length
+  const selectedFilesCount = files.filter((f) => f.selected).length;
 
   return (
     <>
@@ -164,8 +239,10 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
         sidebar={
           <ProjectChatSidebar
             collapsed={!sidebarOpen}
-            selectedFiles={files.filter(f => f.selected).map(f => f.file_id)}
-            files={files.map(f => ({ ...f, size: f.size || 0 }))}
+            selectedFiles={files
+              .filter((f) => f.selected)
+              .map((f) => f.file_id)}
+            files={files.map((f) => ({ ...f, size: f.file_size || 0 }))}
             sessions={[]}
             currentSessionId={sessionId}
             userEmail="user@example.com"
@@ -191,7 +268,7 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
             onInputChange={setInput}
             onSendMessage={sendMessage}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            onToggleFileData={setChatWithData}
+            onToggleFileData={() => setChatWithData(!chatWithData)}
             onBack={onBack}
             selectedModel={selectedModel}
             availableModels={availableModels}
@@ -203,7 +280,15 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
       {/* Metadata Modal */}
       {showMetadata && fileMetadata[showMetadata] && (
         <MetadataModal
-          metadata={fileMetadata[showMetadata]}
+          metadata={{
+            ...fileMetadata[showMetadata],
+            file_id: showMetadata,
+            filename:
+              files.find((f) => f.file_id === showMetadata)?.filename || "",
+            size: files.find((f) => f.file_id === showMetadata)?.file_size || 0,
+            file_type:
+              files.find((f) => f.file_id === showMetadata)?.file_type || "",
+          }}
           onClose={() => setShowMetadata(null)}
           onSave={handleMetadataSave}
         />
@@ -217,35 +302,43 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
               <h3 className="text-lg font-semibold text-gray-900">
                 ตัวอย่างข้อมูล: {fileMetadata[showPreview].filename}
               </h3>
-              <button 
+              <button
                 onClick={() => setShowPreview(null)}
                 className="text-gray-600 hover:text-gray-800"
               >
                 ✕
               </button>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm border border-gray-300">
                 <thead>
                   <tr className="bg-gray-100">
                     {fileMetadata[showPreview].columns?.map((col: any) => (
-                      <th key={col.name} className="px-3 py-2 text-left font-medium border-r border-gray-300">
+                      <th
+                        key={col.name}
+                        className="px-3 py-2 text-left font-medium border-r border-gray-300"
+                      >
                         {col.name}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {fileMetadata[showPreview].preview?.slice(0, 10).map((row, idx) => (
-                    <tr key={idx} className="border-t border-gray-300">
-                      {fileMetadata[showPreview].columns?.map((col: any) => (
-                        <td key={col.name} className="px-3 py-2 border-r border-gray-300">
-                          {row[col.name]?.toString() || '-'}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                  {fileMetadata[showPreview].preview
+                    ?.slice(0, 10)
+                    .map((row, idx) => (
+                      <tr key={idx} className="border-t border-gray-300">
+                        {fileMetadata[showPreview].columns?.map((col: any) => (
+                          <td
+                            key={col.name}
+                            className="px-3 py-2 border-r border-gray-300"
+                          >
+                            {row[col.name]?.toString() || "-"}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -253,5 +346,5 @@ export const ChatPage = ({ projectId, sessionId, onBack }: ChatPageProps) => {
         </div>
       )}
     </>
-  )
-}
+  );
+};

@@ -1,39 +1,40 @@
-import { useState, useEffect, useRef } from 'react'
-import { Button } from '../atoms/Button'
-import { FileUploadButton } from '../molecules/FileUploadButton'
-import { FileUploadModal } from '../molecules/FileUploadModal'
+import { useState, useEffect, useRef } from "react";
+import { Button } from "../atoms/Button";
+import { FileUploadButton } from "../molecules/FileUploadButton";
+import { FileUploadModal } from "../molecules/FileUploadModal";
+import { FileData } from "../../../../types";
 
-interface FileData {
-  file_id: string
-  filename: string
-  size: number
-  file_type: string
-  selected?: boolean
-}
+// interface FileData {
+//   file_id: string;
+//   filename: string;
+//   size: number;
+//   file_type: string;
+//   selected?: boolean;
+// }
 
 interface SessionData {
-  session_id: string
-  name: string
+  session_id: string;
+  name: string;
 }
 
 interface ProjectChatSidebarProps {
-  collapsed: boolean
-  selectedFiles: string[]
-  files: FileData[]
-  sessions: SessionData[]
-  currentSessionId: string | null
-  userEmail: string
-  isUploading: boolean
-  useFileData: boolean
-  onFileSelect: (fileId: string) => void
-  onNewChat: () => void
-  onToggleSidebar: () => void
-  onSessionSelect: (sessionId: string) => void
-  onLogout: () => void
-  onFileUpload: (files: FileList) => void
-  onUpdateSession?: (sessionId: string, name: string) => void
-  onDeleteSession?: (sessionId: string) => void
-  onViewMetadata?: (fileId: string) => void
+  collapsed: boolean;
+  selectedFiles: string[];
+  files: FileData[];
+  sessions: SessionData[];
+  currentSessionId: string | null;
+  userEmail: string;
+  isUploading: boolean;
+  useFileData: boolean;
+  onFileSelect: (fileId: string) => void;
+  onNewChat: () => void;
+  onToggleSidebar: () => void;
+  onSessionSelect: (sessionId: string) => void;
+  onLogout: () => void;
+  onFileUpload: (files: FileList) => void;
+  onUpdateSession?: (sessionId: string, name: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
+  onViewMetadata?: (fileId: string) => void;
 }
 
 export const ProjectChatSidebar = ({
@@ -53,95 +54,104 @@ export const ProjectChatSidebar = ({
   onFileUpload,
   onUpdateSession,
   onDeleteSession,
-  onViewMetadata
+  onViewMetadata,
 }: ProjectChatSidebarProps) => {
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [showSessionMenu, setShowSessionMenu] = useState<string | null>(null)
-  const [editingSession, setEditingSession] = useState<string | null>(null)
-  const [editName, setEditName] = useState('')
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
-  const [showUploadModal, setShowUploadModal] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const sessionMenuRef = useRef<HTMLDivElement>(null)
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showSessionMenu, setShowSessionMenu] = useState<string | null>(null);
+  const [editingSession, setEditingSession] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const sessionMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
       }
-      if (sessionMenuRef.current && !sessionMenuRef.current.contains(event.target as Node)) {
-        setShowSessionMenu(null)
+      if (
+        sessionMenuRef.current &&
+        !sessionMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowSessionMenu(null);
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Freeze all scrolling when session menu is open
   useEffect(() => {
     if (showSessionMenu) {
-      const preventDefault = (e: Event) => e.preventDefault()
-      document.body.style.overflow = 'hidden'
-      document.addEventListener('wheel', preventDefault, { passive: false })
-      document.addEventListener('touchmove', preventDefault, { passive: false })
+      const preventDefault = (e: Event) => e.preventDefault();
+      document.body.style.overflow = "hidden";
+      document.addEventListener("wheel", preventDefault, { passive: false });
+      document.addEventListener("touchmove", preventDefault, {
+        passive: false,
+      });
       return () => {
-        document.body.style.overflow = 'unset'
-        document.removeEventListener('wheel', preventDefault)
-        document.removeEventListener('touchmove', preventDefault)
-      }
+        document.body.style.overflow = "unset";
+        document.removeEventListener("wheel", preventDefault);
+        document.removeEventListener("touchmove", preventDefault);
+      };
     }
-  }, [showSessionMenu])
+  }, [showSessionMenu]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
+    const files = event.target.files;
     if (files) {
-      onFileUpload(files)
+      onFileUpload(files);
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+        fileInputRef.current.value = "";
       }
     }
-  }
+  };
 
   const handleSessionMenuClick = (e: React.MouseEvent, sessionId: string) => {
-    e.stopPropagation()
-    
-    const rect = e.currentTarget.getBoundingClientRect()
+    e.stopPropagation();
+
+    const rect = e.currentTarget.getBoundingClientRect();
     setMenuPosition({
       top: rect.top,
-      left: rect.left - 112 // 28 * 4 = 112px (width of menu)
-    })
-    
-    setShowSessionMenu(showSessionMenu === sessionId ? null : sessionId)
-  }
+      left: rect.left - 112, // 28 * 4 = 112px (width of menu)
+    });
+
+    setShowSessionMenu(showSessionMenu === sessionId ? null : sessionId);
+  };
 
   const handleRenameSession = (sessionId: string, currentName: string) => {
-    setEditingSession(sessionId)
-    setEditName(currentName)
-    setShowSessionMenu(null)
-  }
+    setEditingSession(sessionId);
+    setEditName(currentName);
+    setShowSessionMenu(null);
+  };
 
   const handleDeleteSession = (sessionId: string, sessionName: string) => {
     if (confirm(`ต้องการลบแชท "${sessionName}" หรือไม่?`)) {
-      onDeleteSession?.(sessionId)
+      onDeleteSession?.(sessionId);
     }
-    setShowSessionMenu(null)
-  }
+    setShowSessionMenu(null);
+  };
 
   const handleSaveSessionEdit = () => {
     if (editName.trim() && editingSession && onUpdateSession) {
-      onUpdateSession(editingSession, editName.trim())
+      onUpdateSession(editingSession, editName.trim());
     }
-    setEditingSession(null)
-    setEditName('')
-  }
+    setEditingSession(null);
+    setEditName("");
+  };
 
   return (
-    <div className={`bg-gray-50 border-r border-gray-200 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'
-      } relative h-full`}>
+    <div
+      className={`bg-gray-50 border-r border-gray-200 transition-all duration-300 ${
+        collapsed ? "w-16" : "w-64"
+      } relative h-full`}
+    >
       {collapsed ? (
         <div className="p-4 space-y-2">
           <button
@@ -168,7 +178,7 @@ export const ProjectChatSidebar = ({
               ☰
             </button>
           </div>
-          
+
           <button
             onClick={onNewChat}
             className="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-200 rounded transition-colors"
@@ -181,7 +191,7 @@ export const ProjectChatSidebar = ({
             disabled={isUploading}
             className="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-200 rounded transition-colors disabled:opacity-50"
           >
-            {isUploading ? 'กำลังอัปโหลด...' : '📂 Upload Files'}
+            {isUploading ? "กำลังอัปโหลด..." : "📂 Upload Files"}
           </button>
 
           <div className="border-t pt-4">
@@ -192,25 +202,35 @@ export const ProjectChatSidebar = ({
                   No files
                 </div>
               ) : (
-                files.map(file => (
-                  <div key={file.file_id} className="p-2 rounded group hover:bg-gray-100">
+                files.map((file) => (
+                  <div
+                    key={file.file_id}
+                    className="p-2 rounded group hover:bg-gray-100"
+                  >
                     <div className="flex items-center justify-between">
-                      <div 
-                        className={`flex items-center space-x-2 flex-1 cursor-pointer ${!useFileData ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      <div
+                        className={`flex items-center space-x-2 flex-1 cursor-pointer ${
+                          !useFileData ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                         onClick={async () => {
-                          if (!useFileData) return
-                          
-                          const isCurrentlySelected = file.selected || false
-                          const newSelected = !isCurrentlySelected
-                          
+                          if (!useFileData) return;
+
+                          const isCurrentlySelected = file.selected || false;
+                          const newSelected = !isCurrentlySelected;
+
                           try {
-                            const { apiService } = await import('../../../lib/api')
-                            await apiService.updateFileSelection(file.file_id, newSelected)
+                            const { apiService } = await import(
+                              "../../../api/api"
+                            );
+                            await apiService.updateFileSelection(
+                              file.file_id,
+                              newSelected
+                            );
                           } catch (error) {
-                            console.error('❌ API call failed:', error)
+                            console.error("❌ API call failed:", error);
                           }
-                          
-                          onFileSelect(file.file_id)
+
+                          onFileSelect(file.file_id);
                         }}
                       >
                         <input
@@ -226,8 +246,8 @@ export const ProjectChatSidebar = ({
                       </div>
                       <button
                         onClick={(e) => {
-                          e.stopPropagation()
-                          onViewMetadata?.(file.file_id)
+                          e.stopPropagation();
+                          onViewMetadata?.(file.file_id);
                         }}
                         className="ml-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-600 rounded transition-colors"
                         title="View metadata"
@@ -249,11 +269,17 @@ export const ProjectChatSidebar = ({
                   No chat sessions
                 </div>
               ) : (
-                sessions.map(session => (
+                sessions.map((session) => (
                   <div key={session.session_id}>
                     <div
-                      className={`flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer text-sm group ${currentSessionId === session.session_id ? 'bg-gray-200 border-l-4 border-gray-500' : ''}`}
-                      onClick={() => !editingSession && onSessionSelect(session.session_id)}
+                      className={`flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer text-sm group ${
+                        currentSessionId === session.session_id
+                          ? "bg-gray-200 border-l-4 border-gray-500"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        !editingSession && onSessionSelect(session.session_id)
+                      }
                     >
                       {editingSession === session.session_id ? (
                         <input
@@ -262,17 +288,24 @@ export const ProjectChatSidebar = ({
                           onChange={(e) => setEditName(e.target.value)}
                           onBlur={handleSaveSessionEdit}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveSessionEdit()
-                            if (e.key === 'Escape') { setEditingSession(null); setEditName('') }
+                            if (e.key === "Enter") handleSaveSessionEdit();
+                            if (e.key === "Escape") {
+                              setEditingSession(null);
+                              setEditName("");
+                            }
                           }}
                           className="flex-1 text-sm border border-blue-500 rounded px-2 py-1 focus:outline-none"
                           autoFocus
                         />
                       ) : (
                         <>
-                          <span className="flex-1 truncate">{session.name}</span>
+                          <span className="flex-1 truncate">
+                            {session.name}
+                          </span>
                           <button
-                            onClick={(e) => handleSessionMenuClick(e, session.session_id)}
+                            onClick={(e) =>
+                              handleSessionMenuClick(e, session.session_id)
+                            }
                             className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 p-1 text-xs"
                           >
                             ⋮
@@ -285,7 +318,7 @@ export const ProjectChatSidebar = ({
               )}
             </div>
           </div>
-          
+
           <div className="border-t pt-4 mt-auto">
             <div className="relative" ref={dropdownRef}>
               <button
@@ -296,7 +329,9 @@ export const ProjectChatSidebar = ({
                   👤
                 </div>
                 <div className="text-left">
-                  <div className="text-sm font-medium">{userEmail || 'User'}</div>
+                  <div className="text-sm font-medium">
+                    {userEmail || "User"}
+                  </div>
                 </div>
               </button>
 
@@ -325,17 +360,29 @@ export const ProjectChatSidebar = ({
           className="fixed w-28 bg-white border rounded-md shadow-lg z-50"
           style={{
             top: `${menuPosition.top}px`,
-            left: `${menuPosition.left}px`
+            left: `${menuPosition.left}px`,
           }}
         >
           <button
-            onClick={() => handleRenameSession(showSessionMenu, sessions.find(s => s.session_id === showSessionMenu)?.name || '')}
+            onClick={() =>
+              handleRenameSession(
+                showSessionMenu,
+                sessions.find((s) => s.session_id === showSessionMenu)?.name ||
+                  ""
+              )
+            }
             className="w-full text-center px-3 py-2 text-xs hover:bg-gray-100"
           >
             ✏️ เปลี่ยนชื่อ
           </button>
           <button
-            onClick={() => handleDeleteSession(showSessionMenu, sessions.find(s => s.session_id === showSessionMenu)?.name || '')}
+            onClick={() =>
+              handleDeleteSession(
+                showSessionMenu,
+                sessions.find((s) => s.session_id === showSessionMenu)?.name ||
+                  ""
+              )
+            }
             className="w-full text-center px-3 py-2 text-xs hover:bg-red-50 hover:text-red-600"
           >
             🗑️ ลบ
@@ -350,5 +397,5 @@ export const ProjectChatSidebar = ({
         isUploading={isUploading}
       />
     </div>
-  )
-}
+  );
+};

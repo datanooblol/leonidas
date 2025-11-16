@@ -1,17 +1,17 @@
-import React from 'react'
-import { CopyButton } from '../atoms/CopyButton'
+import React from "react";
+import { CopyButton } from "../atoms/CopyButton";
 
 interface CodeBlockProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export const CodeBlock = ({ children }: CodeBlockProps) => {
   // Extract text from nested code element
-  let codeText = ''
-  if (React.isValidElement(children) && children.props.children) {
-    codeText = children.props.children
+  let codeText = "";
+  if (React.isValidElement(children) && (children.props as any).children) {
+    codeText = (children.props as any).children;
   } else {
-    codeText = children?.toString() || ''
+    codeText = children?.toString() || "";
   }
 
   return (
@@ -24,5 +24,5 @@ export const CodeBlock = ({ children }: CodeBlockProps) => {
         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100"
       />
     </div>
-  )
-}
+  );
+};
