@@ -18,6 +18,10 @@ export const AuthForm = ({ onSwitchToRegister }: AuthFormProps) => {
   const router = useRouter()
 
   const handleAuth = async (isLogin: boolean) => {
+    console.log('🔘 Button clicked:', isLogin ? 'Login' : 'Register')
+    console.log('📧 Email:', email)
+    console.log('🔒 Password length:', password.length)
+    
     setIsLoading(true)
     setError('')
 
@@ -55,6 +59,11 @@ export const AuthForm = ({ onSwitchToRegister }: AuthFormProps) => {
       />
 
       <ErrorMessage message={error} />
+      
+      {/* Test button */}
+      <button type="button" onClick={() => console.log('TEST BUTTON CLICKED')} style={{background: 'red', color: 'white', padding: '10px'}}>
+        TEST CLICK
+      </button>
       
       <AuthButtons
         onLogin={() => handleAuth(true)}

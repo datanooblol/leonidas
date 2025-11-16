@@ -142,7 +142,7 @@ export const apiService = {
 
   async login(email: string, password: string): Promise<AuthResponse> {
     const payload = { email, password };
-    // console.log("🔐 API Request - Login:", payload);
+    console.log("🔐 API Request - Login:", payload);
 
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
@@ -160,6 +160,7 @@ export const apiService = {
 
     const data = await response.json();
     // console.log("✅ API Response - Login:", data);
+    console.log("Log in successfully");
     this.setAuthToken(data.access_token);
     return data;
   },

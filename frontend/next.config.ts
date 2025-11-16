@@ -15,13 +15,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
-  // ...(process.env.NODE_ENV === "production" && { output: "export" }),
+  // Remove static export - it breaks JavaScript
   trailingSlash: true,
   images: {
     unoptimized: true,
   },
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      "plotly.js": "plotly.js-dist-min",
+    },
+  },
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

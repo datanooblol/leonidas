@@ -11,7 +11,7 @@ export const Button = ({ variant = 'primary', className = '', children, ...props
   }
   
   return (
-    <button className={`${baseClass} ${variants[variant]} ${className}`} {...props}>
+    <button type="button" className={`${baseClass} ${variants[variant]} ${className}`} {...props}>
       {children}
     </button>
   )
