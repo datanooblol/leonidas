@@ -1,17 +1,18 @@
+import { FileData } from "../../../../types";
 import { FileSidebar } from "../molecules/FileSidebar";
 
-interface FileData {
-  file_id: string;
-  project_id: string;
-  filename: string;
-  size: number;
-  file_type?: string;
-  status: string;
-  source: string;
-  selected: boolean;
-  created_at: string;
-  updated_at: string;
-}
+// interface FileData {
+//   file_id: string;
+//   project_id: string;
+//   filename: string;
+//   size: number;
+//   file_type?: string;
+//   status: string;
+//   source: string;
+//   selected: boolean;
+//   created_at: string;
+//   updated_at: string;
+// }
 
 interface FileManagerSectionProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export const FileManagerSection = ({
         file_id: file.file_id,
         project_id: file.project_id,
         filename: file.filename,
-        size: file.file_size, // Map file_size to size
+        file_size: file.file_size, // Map file_size to size
         file_type: file.file_type,
         status: "active",
         source: "upload",

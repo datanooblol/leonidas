@@ -1,25 +1,30 @@
-interface FileData {
-  file_id: string
-  filename: string
-  file_size: number
-  file_type: string
-  created_at: string
-}
+import { FileData } from "../../../../types";
+// interface FileData {
+//   file_id: string;
+//   filename: string;
+//   file_size: number;
+//   file_type: string;
+//   created_at: string;
+// }
 
 interface FileManagerItemProps {
-  file: FileData
-  onViewMetadata: (fileId: string) => void
-  onDelete: (fileId: string, filename: string) => void
+  file: FileData;
+  onViewMetadata: (fileId: string) => void;
+  onDelete: (fileId: string, filename: string) => void;
 }
 
-export const FileManagerItem = ({ file, onViewMetadata, onDelete }: FileManagerItemProps) => {
+export const FileManagerItem = ({
+  file,
+  onViewMetadata,
+  onDelete,
+}: FileManagerItemProps) => {
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
 
   return (
     <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
@@ -28,7 +33,8 @@ export const FileManagerItem = ({ file, onViewMetadata, onDelete }: FileManagerI
           {file.filename}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {file.file_size ? formatFileSize(file.file_size) : 'Unknown size'} • {new Date(file.created_at).toLocaleDateString('th-TH')}
+          {file.file_size ? formatFileSize(file.file_size) : "Unknown size"} •{" "}
+          {new Date(file.created_at).toLocaleDateString("th-TH")}
         </p>
       </div>
       <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center space-x-2">
@@ -48,5 +54,5 @@ export const FileManagerItem = ({ file, onViewMetadata, onDelete }: FileManagerI
         </button>
       </div>
     </div>
-  )
-}
+  );
+};

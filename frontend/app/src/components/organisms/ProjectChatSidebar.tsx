@@ -2,14 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "../atoms/Button";
 import { FileUploadButton } from "../molecules/FileUploadButton";
 import { FileUploadModal } from "../molecules/FileUploadModal";
+import { FileData } from "../../../../types";
 
-interface FileData {
-  file_id: string;
-  filename: string;
-  size: number;
-  file_type: string;
-  selected?: boolean;
-}
+// interface FileData {
+//   file_id: string;
+//   filename: string;
+//   size: number;
+//   file_type: string;
+//   selected?: boolean;
+// }
 
 interface SessionData {
   session_id: string;

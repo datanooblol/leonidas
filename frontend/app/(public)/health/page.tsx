@@ -6,7 +6,6 @@ export default function HealthPage() {
   const [status, setStatus] = useState<string>("");
   const [httpStatus, setHttpStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  // const [appState, setAppState] = useState<AppState>('test')
 
   // test1
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { FileData } from "../../../../types";
 import { useState } from "react";
 import { Card } from "../atoms/Card";
 import { Heading } from "../atoms/Heading";
@@ -8,26 +9,35 @@ import { apiService } from "../../../api/api";
 import { MetadataModal } from "./MetadataModal";
 
 // interface FileData {
-//   file_id: string
-//   project_id: string
-//   filename: string
-//   size: number
-//   file_type: string
-//   created_at: string
+//   file_id: string;
+//   project_id: string;
+//   filename: string;
+//   file_size: number;
+//   file_type: string;
+//   created_at: string;
 // }
-interface FileData {
-  file_id: string;
-  project_id: string;
-  filename: string;
-  file_size: number;
-  file_type: string;
-  created_at: string;
-}
+
+// interface FileMetadata {
+//   file_id: string;
+//   filename: string;
+//   size: number;
+//   name?: string;
+//   description?: string;
+//   columns?: ColumnMetadata[];
+// }
 
 interface FileMetadata {
   description?: string;
   tags?: string[];
   [key: string]: any;
+}
+
+interface ColumnMetadata {
+  column: string;
+  dtype: string;
+  input_type: string;
+  description?: string;
+  summary?: string;
 }
 
 interface FileManagerProps {
@@ -121,6 +131,9 @@ export const FileManager = ({
   };
 
   const handleMetadataView = (fileId: string) => {
+    const file = files.find((f) => f.file_id === fileId);
+    if (!file) return;
+
     loadFileMetadata(fileId);
     setShowMetadata(fileId);
   };
@@ -128,7 +141,7 @@ export const FileManager = ({
   const handleMetadataSave = (updatedMetadata: FileMetadata) => {
     setFileMetadata((prev) => ({
       ...prev,
-      [showMetadata!]: updatedMetadata,
+      [updatedMetadata.file_id]: updatedMetadata,
     }));
   };
 
@@ -161,10 +174,17 @@ export const FileManager = ({
           ))}
         </div>
       )}
-
       {showMetadata && fileMetadata[showMetadata] && (
         <MetadataModal
-          metadata={fileMetadata[showMetadata]}
+          metadata={{
+            file_id: showMetadata,
+            filename:
+              files.find((f) => f.file_id === showMetadata)?.filename || "",
+            size: files.find((f) => f.file_id === showMetadata)?.file_size || 0,
+            file_type:
+              files.find((f) => f.file_id === showMetadata)?.file_type || "",
+            ...fileMetadata[showMetadata],
+          }}
           onClose={() => setShowMetadata(null)}
           onSave={handleMetadataSave}
         />

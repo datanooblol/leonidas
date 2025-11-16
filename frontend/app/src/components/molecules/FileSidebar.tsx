@@ -1,22 +1,16 @@
+import { FileData } from "../../../../types";
 import { useRef } from "react";
 import { Toggle } from "../atoms/Toggle";
 import { Badge } from "../atoms/Badge";
 import { FileItem } from "./FileItem";
 
 // interface FileData {
-//   file_id: string
-//   filename: string
-//   size: number
-//   file_type?: string
-//   selected?: boolean
+//   file_id: string;
+//   filename: string;
+//   size: number;
+//   file_type?: string;
+//   selected: boolean;
 // }
-interface FileData {
-  file_id: string;
-  filename: string;
-  size: number;
-  file_type?: string;
-  selected: boolean;
-}
 
 interface FileSidebarProps {
   isOpen: boolean;

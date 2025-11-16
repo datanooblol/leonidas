@@ -1,4 +1,5 @@
 "use client";
+import { FileData } from "../../../../types";
 import { useState, useEffect } from "react";
 import { ChatTemplate } from "../templates/ChatTemplate";
 import { ProjectChatSidebar } from "../organisms/ProjectChatSidebar";
@@ -24,15 +25,15 @@ interface SessionData {
   updated_at: string;
 }
 
-interface FileData {
-  file_id: string;
-  project_id: string;
-  filename: string;
-  size: number;
-  file_type: string;
-  created_at: string;
-  selected?: boolean;
-}
+// interface FileData {
+//   file_id: string
+//   project_id: string
+//   filename: string
+//   size: number
+//   file_type: string
+//   created_at: string
+//   selected?: boolean
+// }
 
 interface Message {
   id: string;
@@ -47,24 +48,22 @@ interface Column {
   dtype: string;
   input_type: string;
   description: string | null;
-  summary: string | null;
+  // summary: string | null;
 }
 
 interface FileMetadata {
-  // file_id: string;
-  // project_id: string;
-  // filename: string;
-  // size: number;
-  // status: string;
-  // source: string;
-  // selected: boolean;
-  // created_at: string;
-  // updated_at: string;
-  // name: string;
-  description?: string;
-  tags?: string[];
-  columns?: Column[];
-  [key: string]: any;
+  file_id: string;
+  project_id: string;
+  filename: string;
+  size: number;
+  status: string;
+  source: string;
+  selected: boolean;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  description: string;
+  columns: Column[];
 }
 
 interface NewProjectPageProps {
@@ -149,17 +148,9 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
       setSessions(sessionsData);
       // Use selected property from API response
       const filesWithSelection = filesData.map((file) => ({
-        file_id: file.file_id,
-        project_id: file.project_id,
-        filename: file.filename,
-        size: file.file_size, // Map file_size to size
-        file_type: file.file_type,
-        status: "active", // Add required status property
-        source: "upload", // Add required source property
-        created_at: file.created_at,
+        ...file,
         selected: file.selected === true, // Ensure boolean value
       }));
-
       setFiles(filesWithSelection);
     } catch (error) {
       console.error("Failed to load project data:", error);
@@ -242,12 +233,7 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
       // Reload files after upload
       const filesData = await apiService.getFiles(project.project_id);
       const filesWithSelection = filesData.map((file) => ({
-        file_id: file.file_id,
-        project_id: file.project_id,
-        filename: file.filename,
-        size: file.file_size, // Map file_size to size
-        file_type: file.file_type,
-        created_at: file.created_at,
+        ...file,
         selected: file.selected === true, // Ensure boolean value
       }));
       setFiles(filesWithSelection);
@@ -313,10 +299,38 @@ export const NewProjectPage = ({ project, onBack }: NewProjectPageProps) => {
     }
   };
 
+  // const handleViewMetadata = async (fileId: string) => {
+  //   try {
+  //     const metadata = await apiService.getFileMetadata(fileId);
+  //     setCurrentMetadata(metadata);
+  //     setShowMetadataModal(true);
+  //   } catch (error) {
+  //     console.error("Failed to get metadata:", error);
+  //     alert("Failed to load file metadata");
+  //   }
+  // };
   const handleViewMetadata = async (fileId: string) => {
     try {
       const metadata = await apiService.getFileMetadata(fileId);
-      setCurrentMetadata(metadata);
+      const file = files.find((f) => f.file_id === fileId);
+
+      // Transform API response to match local FileMetadata interface
+      const transformedMetadata: FileMetadata = {
+        file_id: fileId,
+        project_id: file?.project_id || "",
+        filename: file?.filename || "",
+        size: file?.file_size || 0,
+        status: "active",
+        source: "upload",
+        selected: file?.selected || false,
+        created_at: file?.created_at || "",
+        updated_at: file?.created_at || "",
+        name: metadata.name || "",
+        description: metadata.description || "",
+        columns: metadata.columns || [],
+      };
+
+      setCurrentMetadata(transformedMetadata);
       setShowMetadataModal(true);
     } catch (error) {
       console.error("Failed to get metadata:", error);
