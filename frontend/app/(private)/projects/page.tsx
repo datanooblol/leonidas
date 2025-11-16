@@ -1,11 +1,10 @@
 "use client";
-// export const dynamic = "force-dynamic";
-// export { generateStaticParams } from "./generateStaticParams";
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { NewProjectPage } from "../../../src/components/pages/NewProjectPage";
-import { Spinner } from "../../../src/components/atoms/Spinner";
-import { apiService } from "../../../api/api";
+
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { NewProjectPage } from "../../src/components/pages/NewProjectPage";
+import { Spinner } from "../../src/components/atoms/Spinner";
+import { apiService } from "../../api/api";
 
 interface ProjectData {
   project_id: string;
@@ -15,12 +14,12 @@ interface ProjectData {
   updated_at: string;
 }
 
-export default function ProjectDetail() {
+function ProjectDetailContent() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const params = useParams();
-  const projectId = params.projectId as string;
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get("id") || "";
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -76,4 +75,18 @@ export default function ProjectDetail() {
   }
 
   return <NewProjectPage project={project} onBack={handleBack} />;
+}
+
+export default function ProjectDetail() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <ProjectDetailContent />
+    </Suspense>
+  );
 }

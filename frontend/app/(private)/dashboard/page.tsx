@@ -25,7 +25,7 @@ export default function Dashboard() {
   }, [router])
 
   const handleSelectProject = (projectId: string, project: any) => {
-    router.push(`/projects/${projectId}`)
+    router.push(`/projects?id=${projectId}`)
   }
 
   const handleLogout = () => {
