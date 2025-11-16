@@ -1,25 +1,32 @@
-import { useRef } from 'react'
-import { Toggle } from '../atoms/Toggle'
-import { Badge } from '../atoms/Badge'
-import { FileItem } from './FileItem'
+import { useRef } from "react";
+import { Toggle } from "../atoms/Toggle";
+import { Badge } from "../atoms/Badge";
+import { FileItem } from "./FileItem";
 
+// interface FileData {
+//   file_id: string
+//   filename: string
+//   size: number
+//   file_type?: string
+//   selected?: boolean
+// }
 interface FileData {
-  file_id: string
-  filename: string
-  size: number
-  file_type?: string
-  selected?: boolean
+  file_id: string;
+  filename: string;
+  size: number;
+  file_type?: string;
+  selected: boolean;
 }
 
 interface FileSidebarProps {
-  isOpen: boolean
-  files: FileData[]
-  chatWithData: boolean
-  onToggleChatWithData: (enabled: boolean) => void
-  onFileUpload: (files: FileList) => void
-  onToggleFileSelection: (fileId: string) => void
-  onViewMetadata: (fileId: string) => void
-  onViewPreview: (fileId: string) => void
+  isOpen: boolean;
+  files: FileData[];
+  chatWithData: boolean;
+  onToggleChatWithData: (enabled: boolean) => void;
+  onFileUpload: (files: FileList) => void;
+  onToggleFileSelection: (fileId: string) => void;
+  onViewMetadata: (fileId: string) => void;
+  onViewPreview: (fileId: string) => void;
 }
 
 export const FileSidebar = ({
@@ -30,13 +37,17 @@ export const FileSidebar = ({
   onFileUpload,
   onToggleFileSelection,
   onViewMetadata,
-  onViewPreview
+  onViewPreview,
 }: FileSidebarProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const selectedCount = files.filter(f => f.selected || false).length
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedCount = files.filter((f) => f.selected || false).length;
 
   return (
-    <div className={`${isOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden bg-gray-100 border-r border-gray-300`}>
+    <div
+      className={`${
+        isOpen ? "w-80" : "w-0"
+      } transition-all duration-300 overflow-hidden bg-gray-100 border-r border-gray-300`}
+    >
       <div className="p-4 border-b border-gray-300">
         <div className="flex items-center justify-between mb-4">
           <Toggle
@@ -45,12 +56,14 @@ export const FileSidebar = ({
             label="Chat with Data"
           />
           <span className="text-xs text-gray-600">
-            {chatWithData ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+            {chatWithData ? "เปิดใช้งาน" : "ปิดใช้งาน"}
           </span>
         </div>
-        
+
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">เอกสารแหล่งข้อมูล</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            เอกสารแหล่งข้อมูล
+          </h2>
           <input
             ref={fileInputRef}
             type="file"
@@ -67,7 +80,7 @@ export const FileSidebar = ({
             📁
           </button>
         </div>
-        
+
         {selectedCount > 0 && (
           <Badge count={selectedCount} text="เลือกแล้ว" variant="blue" />
         )}
@@ -96,5 +109,5 @@ export const FileSidebar = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};

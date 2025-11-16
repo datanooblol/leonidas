@@ -4,7 +4,7 @@ import { Heading } from '../atoms/Heading'
 import { Button } from '../atoms/Button'
 import { CreateSessionForm } from '../molecules/CreateSessionForm'
 import { SessionItem } from '../molecules/SessionItem'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 
 interface SessionData {
   session_id: string
@@ -91,7 +91,7 @@ export const SessionManager = ({
   return (
     <Card className="p-4">
       <div className="flex justify-between items-center mb-4">
-        <Heading level={3}>Chat Sessions</Heading>
+        <Heading>Chat Sessions</Heading>
         <Button
           onClick={() => setShowCreateForm(true)}
           className="px-3 py-2 text-sm w-auto"

@@ -1,58 +1,66 @@
-import { useState } from 'react'
-import { MarkdownRenderer } from '../organisms/MarkdownRenderer'
-import { ArtifactViewer } from './ArtifactViewer'
-import { apiService } from '../../lib/api'
+import { useState } from "react";
+import { MarkdownRenderer } from "../organisms/MarkdownRenderer";
+import { ArtifactViewer } from "./ArtifactViewer";
+import { apiService } from "../../../api/api";
 
 interface Message {
-  id: string
-  content: string
-  role: 'user' | 'assistant'
-  timestamp: Date
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  timestamp: Date;
 }
 
 interface ChatMessageProps {
-  message: Message
+  message: Message;
 }
 
 export const ChatMessage = ({ message }: ChatMessageProps) => {
-  const [artifacts, setArtifacts] = useState<any[]>([])
-  const [loadingArtifacts, setLoadingArtifacts] = useState(false)
-  const [showArtifacts, setShowArtifacts] = useState(false)
+  const [artifacts, setArtifacts] = useState<any[]>([]);
+  const [loadingArtifacts, setLoadingArtifacts] = useState(false);
+  const [showArtifacts, setShowArtifacts] = useState(false);
 
   const handleViewArtifacts = async () => {
     if (artifacts.length === 0) {
-      setLoadingArtifacts(true)
+      setLoadingArtifacts(true);
       try {
-        const data = await apiService.getArtifacts(message.id)
-        setArtifacts(data.artifacts || [])
+        const data = await apiService.getArtifacts(message.id);
+        setArtifacts(data.artifacts || []);
       } catch {
-        setArtifacts([])
+        setArtifacts([]);
       } finally {
-        setLoadingArtifacts(false)
+        setLoadingArtifacts(false);
       }
     }
-    setShowArtifacts(!showArtifacts)
-  }
+    setShowArtifacts(!showArtifacts);
+  };
 
   return (
-    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+    <div
+      className={`flex ${
+        message.role === "user" ? "justify-end" : "justify-start"
+      }`}
+    >
       <div
         className={`max-w-3xl px-4 py-3 rounded-lg ${
-          message.role === 'user'
-            ? 'bg-gray-800 text-white'
-            : 'bg-white text-gray-900 border border-gray-300'
+          message.role === "user"
+            ? "bg-gray-800 text-white"
+            : "bg-white text-gray-900 border border-gray-300"
         }`}
       >
-        {message.role === 'assistant' ? (
+        {message.role === "assistant" ? (
           <>
             <MarkdownRenderer content={message.content} />
-            
+
             <button
               onClick={handleViewArtifacts}
               className="mt-2 px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
               disabled={loadingArtifacts}
             >
-              {loadingArtifacts ? 'Loading...' : showArtifacts ? 'Hide Artifacts' : 'View Artifacts'}
+              {loadingArtifacts
+                ? "Loading..."
+                : showArtifacts
+                ? "Hide Artifacts"
+                : "View Artifacts"}
             </button>
 
             {showArtifacts && (
@@ -74,15 +82,17 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
         ) : (
           <p className="whitespace-pre-wrap">{message.content}</p>
         )}
-        <p className={`text-xs mt-2 ${
-          message.role === 'user' ? 'text-gray-200' : 'text-gray-600'
-        }`}>
-          {message.timestamp.toLocaleTimeString('th-TH', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        <p
+          className={`text-xs mt-2 ${
+            message.role === "user" ? "text-gray-200" : "text-gray-600"
+          }`}
+        >
+          {message.timestamp.toLocaleTimeString("th-TH", {
+            hour: "2-digit",
+            minute: "2-digit",
           })}
         </p>
       </div>
     </div>
-  )
-}
+  );
+};

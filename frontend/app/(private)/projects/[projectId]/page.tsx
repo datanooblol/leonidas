@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { NewProjectPage } from '../../../src/components/pages/NewProjectPage'
 import { Spinner } from '../../../src/components/atoms/Spinner'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 
 interface ProjectData {
   project_id: string

@@ -6,14 +6,15 @@ export default function HealthPage() {
   const [status, setStatus] = useState<string>("");
   const [httpStatus, setHttpStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [appState, setAppState] = useState<AppState>('test')
+  // const [appState, setAppState] = useState<AppState>('test')
 
   // test1
   useEffect(() => {
     const checkHealth = async () => {
       try {
         const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "https://leonidas-api.datanooblol.com";
+          process.env.NEXT_PUBLIC_API_URL ||
+          "https://leonidas-api.datanooblol.com";
         // console.log("API URL:", apiUrl);
         const response = await fetch(`${apiUrl}/health`);
         if (!response.ok) {

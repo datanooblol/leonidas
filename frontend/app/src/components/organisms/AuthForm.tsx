@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { InputField } from '../molecules/InputField'
 import { AuthButtons } from '../molecules/AuthButtons'
 import { ErrorMessage } from '../atoms/ErrorMessage'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 
 interface AuthFormProps {
   onSwitchToRegister?: () => void

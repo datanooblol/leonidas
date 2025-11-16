@@ -13,14 +13,12 @@ interface ColumnMetadata {
 }
 
 interface FileMetadata {
-  file_id: string
-  filename: string
-  size: number
-  name?: string
   description?: string
+  tags?: string[]
   columns?: ColumnMetadata[]
   rows?: number
   file_type?: string
+  [key: string]: any
 }
 
 interface MetadataModalProps {
@@ -53,7 +51,7 @@ export const MetadataModal = ({ metadata, onClose, onSave }: MetadataModalProps)
   return (
     <Modal onClose={onClose}>
       <ModalHeader
-        title={`ข้อมูลไฟล์: ${metadata.filename}`}
+        title={`ข้อมูลไฟล์`}
         isEditing={isEditing}
         onEdit={() => setIsEditing(true)}
         onSave={handleSave}

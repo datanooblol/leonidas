@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { DashboardTemplate } from '../templates/DashboardTemplate'
 import { ProjectsSection } from '../organisms/ProjectsSection'
 import { Spinner } from '../atoms/Spinner'
-import { apiService } from '../../../lib/api'
+import { apiService } from '../../../api/api'
 
 interface Project {
   project_id: string

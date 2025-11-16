@@ -1,7 +1,7 @@
 interface FileData {
   file_id: string
   filename: string
-  size: number
+  file_size: number
   file_type: string
   created_at: string
 }
@@ -28,7 +28,7 @@ export const FileManagerItem = ({ file, onViewMetadata, onDelete }: FileManagerI
           {file.filename}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {file.size ? formatFileSize(file.size) : 'Unknown size'} • {new Date(file.created_at).toLocaleDateString('th-TH')}
+          {file.file_size ? formatFileSize(file.file_size) : 'Unknown size'} • {new Date(file.created_at).toLocaleDateString('th-TH')}
         </p>
       </div>
       <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center space-x-2">
