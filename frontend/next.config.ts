@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  output: "export",
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
